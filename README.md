@@ -39,3 +39,5 @@ npm run dev
 Aplikasi lokal tersedia pada `http://localhost:3000`. Pemeriksaan tipe dan kompilasi produksi dijalankan melalui `npm run typecheck` dan `npm run build`.
 
 Panduan tampilan terdapat dalam [design.md](design.md). Antarmuka menggunakan Urbanist, komposisi login 70:30 pada desktop lebar, dan penyesuaian tata letak untuk tablet serta ponsel. Lisensi font tersedia pada `public/fonts/OFL.txt`.
+
+Pengembangan melalui Docker menggunakan `Dockerfile.dev` bersama tambahan `compose.dev.yaml` pada repositori infrastructure. Container memasang dependensi sesuai lockfile dan menjalankan Nuxt dev server; perubahan source pada host diproses melalui bind mount. Dependensi dan keluaran Nuxt disimpan dalam volume Docker terpisah dari berkas host.

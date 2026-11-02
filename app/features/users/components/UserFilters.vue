@@ -21,14 +21,17 @@ function changeRole(role: Role | '') { emit('change', { ...props.query, role }) 
 <style scoped>
 .filters { padding: 0 1.5rem; }
 .role-tabs { display: flex; gap: 1.75rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.role-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; min-height: 56px; padding: .7rem 0; font-size: .8125rem; color: var(--muted); }
+.role-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; min-height: 56px; padding: .7rem 0; font-size: .9375rem; font-weight: 600; color: var(--muted); }
 .role-tabs button.selected { color: var(--accent); border-bottom-color: var(--accent); font-weight: 650; }
 .search-row { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 0; flex-wrap: wrap; }
 .search-input { flex: 1; display: flex; min-width: 200px; max-width: 420px; border: 1px solid #85858d; border-radius: 8px; }
-.search-input input { border: 0; background: transparent; font-size: .8125rem; }
-.search-submit { background: transparent; border: 0; padding: 0 .875rem; color: var(--accent); font-weight: 600; font-size: .8125rem; }
-.status-filter { width: 160px; }
-.status-filter select { font-size: .8125rem; }
+.search-input:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; border-color: var(--accent); }
+.search-input input { border: 0; background: transparent; font-size: 1rem; }
+.search-input input:focus-visible { outline: none; }
+.search-submit { background: transparent; border: 0; border-radius: 6px; min-height: 48px; min-width: 56px; padding: 0 .875rem; color: var(--accent); font-weight: 600; font-size: .9375rem; }
+.search-submit:focus-visible { outline-offset: -2px; }
+.status-filter { width: 180px; }
+.status-filter select { font-size: 1rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media(max-width:767px) { .filters { padding: 0 1rem; } .role-tabs { gap: 1.1rem; } .role-tabs button { font-size: .75rem; min-height: 50px; } .search-row { gap: .625rem; } .search-input { max-width: none; flex-basis: 100%; } .status-filter { flex: 1; } }
+@media(max-width:767px) { .filters { padding: 0 1rem; } .role-tabs { gap: 1rem; } .role-tabs button { font-size: .875rem; min-height: 50px; } .search-row { gap: .625rem; } .search-input { max-width: none; flex-basis: 100%; } .status-filter { flex: 1; } }
 </style>

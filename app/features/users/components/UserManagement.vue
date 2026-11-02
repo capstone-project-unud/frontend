@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { useAuth } from '~/features/auth/composables/useAuth'
 import { useUsers } from '../composables/useUsers'
 import UserFilters from './UserFilters.vue'
 import UserTable from './UserTable.vue'
 import UserEditor from './UserEditor.vue'
 import type { User, UserInput } from '~/types/user'
 import { apiMessage } from '~/utils/format'
-const auth = useAuth()
 const users = useUsers()
 const { data: list, status: listStatus, error: listError } = users.list
 const { data: stats, error: statsError } = users.stats
@@ -15,7 +13,6 @@ const editorOpen = shallowRef(false)
 const selected = shallowRef<User | null>(null)
 const statusTarget = shallowRef<User | null>(null)
 const confirmDialog = useTemplateRef<HTMLDialogElement>('confirmDialog')
-const date = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full', timeZone: 'Asia/Makassar' }).format(new Date())
 const pages = computed(() => Math.max(1, Math.ceil((list.value?.total || 0) / 12)))
 function edit(user: User | null) { mutationError.value = ''; selected.value = user; editorOpen.value = true }
 async function save(input: UserInput) { if (await users.save(input, selected.value)) editorOpen.value = false }
@@ -26,12 +23,11 @@ async function changeStatus() { if (statusTarget.value && await users.setStatus(
 </script>
 
 <template>
-  <section aria-labelledby="users-heading"><p class="current-date">{{ date }}</p><div class="page-heading"><div><h1 id="users-heading">Kelola orang di balik karya.</h1><p>Atur akun, identitas akademik, dan akses pengguna Capstone Project.</p></div><button class="button primary" @click="edit(null)"><span aria-hidden="true" class="plus">+</span>Tambah pengguna</button></div>
+  <section aria-labelledby="users-heading"><div class="page-heading"><div><h1 id="users-heading">Manajemen pengguna</h1><p>Kelola akun, identitas akademik, dan akses pengguna.</p></div><button class="button primary" @click="edit(null)"><span aria-hidden="true" class="plus">+</span>Tambah pengguna</button></div>
     <p v-if="statsError" class="notice error" role="alert">Ringkasan belum dapat dimuat. <button class="text-button" @click="users.stats.refresh()">Coba lagi</button></p>
-    <div class="statistics" aria-label="Ringkasan pengguna"><div><span>Total pengguna</span><strong>{{ stats?.total ?? '—' }}</strong><small>Seluruh akun terdaftar</small></div><div><span>Mahasiswa</span><strong>{{ stats?.students ?? '—' }}</strong><small>Peserta Capstone Project</small></div><div><span>Dosen</span><strong>{{ stats?.lecturers ?? '—' }}</strong><small>Termasuk peran Koprodi</small></div><div><span>Akun aktif</span><strong>{{ stats?.active ?? '—' }}<span class="active-marker" aria-hidden="true" /></strong><small>Dapat mengakses sistem</small></div></div>
-    <div class="management-note"><span class="note-icon" aria-hidden="true">i</span><p><strong>Akses yang tepat, untuk setiap peran.</strong> Akun mahasiswa dan dosen dibuat oleh admin. Nonaktifkan akun untuk menghentikan akses tanpa menghapus riwayat.</p></div>
+    <div class="statistics" aria-label="Ringkasan pengguna"><div><span>Total pengguna</span><strong>{{ stats?.total ?? '—' }}</strong></div><div><span>Mahasiswa</span><strong>{{ stats?.students ?? '—' }}</strong></div><div><span>Dosen</span><strong>{{ stats?.lecturers ?? '—' }}</strong></div><div><span>Akun aktif</span><strong>{{ stats?.active ?? '—' }}</strong></div></div>
     <p v-if="message" class="notice success feedback" role="status">{{ message }}</p><p v-if="mutationError && !editorOpen && !statusTarget" class="notice error feedback" role="alert">{{ mutationError }}</p>
-    <div class="panel users-panel"><div class="section-heading"><h2>Manajemen pengguna</h2><span>{{ list?.total ?? '—' }} pengguna</span></div><UserFilters :query="params" @change="users.filters" />
+    <div class="panel users-panel"><div class="section-heading"><h2>Daftar pengguna</h2><span>{{ list?.total ?? '—' }} pengguna</span></div><UserFilters :query="params" @change="users.filters" />
       <div v-if="listStatus === 'pending'" class="empty-state" role="status"><p>Memuat daftar pengguna…</p></div>
       <div v-else-if="listError" class="empty-state"><h3>Daftar belum dapat dimuat</h3><p>{{ apiMessage(listError) }}</p><button class="button secondary" @click="users.refresh">Coba lagi</button></div>
       <UserTable v-else-if="list?.items.length" :users="list.items" :busy="saving" @edit="edit" @status="confirmStatus" />
@@ -44,33 +40,26 @@ async function changeStatus() { if (statusTarget.value && await users.setStatus(
 </template>
 
 <style scoped>
-.current-date { color: var(--muted); font-size: .6875rem; margin-bottom: .875rem; }
 .plus { font-size: 1.25rem; font-weight: 400; line-height: 1; }
 .statistics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); margin: 2.5rem 0 2rem; }
 .statistics > div { padding-left: 2rem; border-left: 1px solid #dedfda; }
 .statistics > div:first-child { padding-left: 0; border: 0; }
-.statistics > div > span { font-size: .75rem; color: var(--muted); }
+.statistics > div > span { font-size: .9375rem; color: var(--muted); }
 .statistics strong { display: flex; gap: .75rem; align-items: center; margin-top: .5rem; font-size: 2.25rem; letter-spacing: -.04em; font-weight: 500; line-height: 1.15; }
-.statistics small { display: block; font-size: .6875rem; margin-top: .5rem; color: var(--muted); }
-.active-marker { width: 8px; height: 8px; border-radius: 50%; background: #4d765c; }
-.management-note { display: flex; gap: .875rem; align-items: flex-start; padding: 1rem 1.25rem; background: var(--accent-soft); border-radius: 12px; margin-bottom: 2rem; color: #53406e; }
-.note-icon { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #75618f; border-radius: 50%; font-size: .75rem; flex-shrink: 0; margin-top: .125rem; }
-.management-note p { font-size: .8125rem; line-height: 1.65; }
-.management-note strong { font-weight: 650; margin-right: .35rem; }
 .feedback { margin-bottom: 1.25rem; }
-.users-panel { min-width: 0; }
+.users-panel { min-width: 0; container: users / inline-size; }
 .section-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 1.5rem 1.5rem .5rem; }
-.section-heading h2 { font-size: 1rem; font-weight: 600; letter-spacing: -.02em; }
-.section-heading > span { color: var(--muted); font-size: .75rem; }
-.pagination { padding: 1rem 1.5rem; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 1rem; align-items: center; font-size: .75rem; color: var(--muted); }
+.section-heading h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; }
+.section-heading > span { color: var(--muted); font-size: .875rem; }
+.pagination { padding: 1rem 1.5rem; border-top: 1px solid var(--line); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: center; font-size: .875rem; color: var(--muted); }
 .pagination > div { display: flex; gap: .5rem; }
-.pager { font-size: .75rem; background: white; border-color: #85858d; padding: .5rem .75rem; }
+.pager { font-size: .875rem; background: white; border-color: #85858d; padding: .5rem .75rem; }
 .pager:disabled { background: #f5f5f3; border-color: #dededb; cursor: default; }
 .confirm-dialog { width: min(460px,calc(100% - 2rem)); padding: 2rem; border: none; border-radius: 20px; color: var(--ink); box-shadow: 0 20px 80px #15131f30; }
 .confirm-dialog::backdrop { background: #1c1a2755; }
 .confirm-dialog h2 { font-size: 1.5rem; font-weight: 550; letter-spacing: -.02em; }
-.confirm-dialog p { margin-top: 1rem; font-size: .875rem; line-height: 1.65; color: var(--muted); }
+.confirm-dialog p { margin-top: 1rem; font-size: 1rem; line-height: 1.65; color: var(--muted); }
 .confirm-dialog > div { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
 @media(min-width:768px) and (max-width:1199px) { .statistics > div { padding-left: 1rem; } .page-heading { flex-direction: column; align-items: flex-start; } }
-@media(max-width:767px) { .statistics { grid-template-columns: 1fr 1fr; gap: 1.5rem 1rem; margin-block: 1.5rem; } .statistics > div { padding-left: 1rem; } .statistics > div:nth-child(3) { padding-left: 0; border: 0; } .statistics strong { font-size: 2rem; } .management-note { padding: 1rem; margin-bottom: 1.5rem; } .management-note strong { display: block; } .section-heading { padding: 1.25rem 1rem .5rem; } .pagination { padding: 1rem; flex-wrap: wrap; } }
+@media(max-width:767px) { .statistics { grid-template-columns: 1fr 1fr; gap: 1.5rem 1rem; margin-block: 1.5rem; } .statistics > div { padding-left: 1rem; } .statistics > div:nth-child(3) { padding-left: 0; border: 0; } .statistics strong { font-size: 2rem; } .section-heading { padding: 1.25rem 1rem .5rem; } .pagination { padding: 1rem; } }
 </style>

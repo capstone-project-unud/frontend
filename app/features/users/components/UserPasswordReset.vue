@@ -10,8 +10,8 @@ const password = shallowRef('')
 <style scoped>
 .password-reset { padding: 1.5rem 2rem; border-top: 1px solid var(--line); }
 h3 { font-size: 1rem; font-weight: 600; }
-p { font-size: .8125rem; line-height: 1.6; color: var(--muted); margin: .5rem 0 1rem; }
-label { font-size: .8125rem; display: block; margin-bottom: .5rem; }
+p { font-size: 1rem; line-height: 1.6; color: var(--muted); margin: .5rem 0 1rem; }
+label { font-size: .9375rem; font-weight: 600; display: block; margin-bottom: .75rem; }
 form > div { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
 @media(max-width:767px) { .password-reset { padding: 1.25rem; } }
 </style>

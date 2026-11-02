@@ -1,0 +1,8 @@
+FROM node:22.22.3-alpine
+RUN mkdir -p /app/node_modules /app/.nuxt /app/.output /home/node/.npm \
+    && chown -R node:node /app /home/node/.npm
+WORKDIR /app
+ENV NODE_ENV=development NUXT_TELEMETRY_DISABLED=1
+USER node
+EXPOSE 3000
+CMD ["sh", "-c", "npm ci && node node_modules/nuxt/bin/nuxt.mjs dev --host 0.0.0.0"]

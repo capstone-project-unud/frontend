@@ -39,8 +39,10 @@ async function logout() { try { await auth.logout() } catch (e) { error.value = 
 .profile-identity { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
 .profile-avatar { display: grid; place-items: center; width: 54px; height: 54px; background: #e7e0f5; color: #64419d; border-radius: 50%; font-weight: 600; }
 h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; }
-.profile-identity p { color: var(--muted); font-size: .8125rem; margin-top: .375rem; }
-.password-panel > p { color: var(--muted); font-size: .875rem; line-height: 1.65; margin: .75rem 0 1.5rem; }
+.profile-identity p { color: var(--muted); font-size: .9375rem; margin-top: .375rem; }
+.password-panel > p { color: var(--muted); font-size: 1rem; line-height: 1.65; margin: .75rem 0 1.5rem; }
+.profile-identity > div { min-width: 0; overflow-wrap: anywhere; }
+.profile-avatar { flex-shrink: 0; }
 .password-panel .field { margin-bottom: 1.25rem; }
 .save-profile { margin-top: 1.5rem; }
 .notice { margin-top: 1rem; }

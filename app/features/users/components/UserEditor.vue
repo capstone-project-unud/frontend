@@ -20,7 +20,7 @@ function save() {
 
 <template>
   <dialog ref="dialog" class="editor-dialog" aria-labelledby="editor-title" @cancel.prevent="close">
-    <div class="dialog-header"><div><p class="eyebrow">Manajemen pengguna</p><h2 id="editor-title">{{ user ? 'Ubah pengguna' : 'Tambah pengguna' }}</h2></div><button class="close-button" type="button" aria-label="Tutup formulir" :disabled="busy" @click="close">×</button></div>
+    <div class="dialog-header"><h2 id="editor-title">{{ user ? 'Ubah pengguna' : 'Tambah pengguna' }}</h2><button class="close-button" type="button" aria-label="Tutup formulir" :disabled="busy" @click="close">×</button></div>
     <form @submit.prevent="save"><div class="dialog-body"><p class="dialog-intro">{{ user ? 'Perbarui informasi akun dan identitas akademik pengguna.' : 'Siapkan akun untuk mahasiswa atau dosen program studi.' }}</p><fieldset :disabled="busy"><div class="field-grid">
       <div class="field full"><label for="user-role">Jenis pengguna</label><select id="user-role" v-model="baseRole"><option value="MAHASISWA">Mahasiswa</option><option value="DOSEN">Dosen</option></select></div>
       <div class="field full"><label for="user-name">Nama lengkap</label><input id="user-name" v-model="form.full_name" autocomplete="name" required minlength="2" maxlength="150" placeholder="Nama lengkap pengguna"></div>
@@ -40,12 +40,12 @@ function save() {
 .editor-dialog { width: min(580px,calc(100% - 2rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 0; border-radius: 24px; color: var(--ink); box-shadow: 0 24px 80px #15131f30; }
 .editor-dialog::backdrop { background: #1c1a2755; }
 .dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 1.75rem 2rem 1rem; }
-.dialog-header h2 { margin-top: .5rem; font-size: 1.75rem; font-weight: 550; letter-spacing: -.03em; }
-.close-button { border: 0; background: #f1f1ef; width: 44px; height: 44px; border-radius: 50%; font-size: 1.5rem; color: var(--muted); }
+.dialog-header h2 { font-size: 1.75rem; font-weight: 600; letter-spacing: -.03em; }
+.close-button { border: 0; background: #f1f1ef; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 50%; font-size: 1.5rem; color: var(--muted); }
 .dialog-body { padding: 0 2rem 1.5rem; }
-.dialog-intro { color: var(--muted); font-size: .875rem; line-height: 1.6; margin-bottom: 1.5rem; }
+.dialog-intro { color: var(--muted); font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-.optional { color: var(--muted); font-weight: 400; }
+.optional { color: var(--muted); font-weight: 500; }
 .password-row { display: flex; gap: .5rem; }
 .password-row .text-button { padding-inline: .25rem; }
 .dialog-body .notice { margin-top: 1rem; }
