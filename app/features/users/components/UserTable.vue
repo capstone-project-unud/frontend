@@ -17,8 +17,8 @@ const isLecturerView = computed(() => props.role === 'DOSEN')
 </script>
 
 <template>
-  <table class="user-table">
-    <caption class="sr-only">Daftar pengguna Capstone Project</caption>
+  <table class="user-table workspace-table">
+    <caption class="visually-hidden">Daftar pengguna Capstone Project</caption>
     <thead>
       <tr>
         <th scope="col">
@@ -130,51 +130,6 @@ const isLecturerView = computed(() => props.role === 'DOSEN')
 </template>
 
 <style scoped>
-.user-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.sr-only {
-  position: absolute;
-  clip-path: inset(50%);
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-th {
-  color: var(--muted);
-  background: var(--canvas);
-  font-size: .875rem;
-  font-weight: 600;
-  padding: 1rem;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-th:first-child,
-td:first-child {
-  padding-left: 1.5rem;
-}
-
-td {
-  border-bottom: 1px solid var(--line);
-  padding: 1.125rem 1rem;
-  font-size: .9375rem;
-  color: var(--ink);
-  vertical-align: middle;
-}
-
-tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-tbody tr:hover {
-  background: var(--panel-hover);
-}
-
 .user-identity {
   display: flex;
   align-items: center;

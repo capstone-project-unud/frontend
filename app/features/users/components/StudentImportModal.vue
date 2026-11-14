@@ -1,13 +1,12 @@
 <script setup lang="ts">
+import WorkspaceFilePicker from '~/components/workspace/WorkspaceFilePicker.vue'
 import { downloadStudentTemplate, parseStudentFile, type ParsedStudentRow } from '~/utils/studentExportImport'
 
 const emit = defineEmits<{ close: []; imported: [] }>()
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
-const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 
 const fileName = shallowRef('')
 const parsedRows = shallowRef<ParsedStudentRow[]>([])
-const isDragging = shallowRef(false)
 const isImporting = shallowRef(false)
 const progressCount = shallowRef(0)
 const importError = shallowRef('')
@@ -25,18 +24,6 @@ onBeforeUnmount(() => dialog.value?.close())
 
 function close() {
   if (!isImporting.value) emit('close')
-}
-
-function handleFileSelect(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) processFile(file)
-}
-
-function handleDrop(event: DragEvent) {
-  isDragging.value = false
-  const file = event.dataTransfer?.files?.[0]
-  if (file) processFile(file)
 }
 
 async function processFile(file: File) {
@@ -73,6 +60,7 @@ async function startImport() {
 
   for (let i = 0; i < rowsToImport.length; i++) {
     const row = rowsToImport[i]
+    if (!row) continue
     progressCount.value = i + 1
 
     try {
@@ -186,41 +174,7 @@ async function startImport() {
         </button>
       </div>
 
-      <!-- File Dropzone -->
-      <div
-        v-if="!isImporting && !completed"
-        class="dropzone"
-        :class="{ dragging: isDragging, 'has-file': Boolean(fileName) }"
-        @dragover.prevent="isDragging = true"
-        @dragleave.prevent="isDragging = false"
-        @drop.prevent="handleDrop"
-        @click="fileInput?.click()"
-      >
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
-          class="hidden-input"
-          @change="handleFileSelect"
-        >
-        <div class="dropzone-content">
-          <div class="drop-icon-circle">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-          </div>
-          <div v-if="fileName" class="file-chosen">
-            <strong>{{ fileName }}</strong>
-            <span>Klik atau seret file lain untuk mengganti</span>
-          </div>
-          <div v-else class="file-prompt">
-            <strong>Klik untuk memilih file atau seret file ke sini</strong>
-            <span>Format yang didukung: Excel (.xlsx, .xls) atau file .csv</span>
-          </div>
-        </div>
-      </div>
+      <WorkspaceFilePicker v-if="!isImporting && !completed" id="student-import-file" accept=".xlsx,.xls,.csv" :file-name="fileName" :disabled="isImporting" @select="processFile" />
 
       <!-- Progress Bar Saat Import Berjalan -->
       <div v-if="isImporting" class="progress-box">
@@ -500,60 +454,6 @@ async function startImport() {
 }
 
 /* Dropzone */
-.dropzone {
-  border: 2px dashed var(--border);
-  border-radius: 16px;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  background: var(--canvas);
-  cursor: pointer;
-  transition: all 180ms ease;
-}
-
-.dropzone:hover,
-.dropzone.dragging {
-  border-color: var(--accent);
-  background: var(--panel-hover);
-}
-
-.dropzone.has-file {
-  border-style: solid;
-  border-color: var(--border);
-  background: var(--panel-hover);
-}
-
-.hidden-input {
-  display: none;
-}
-
-.drop-icon-circle {
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 1rem;
-  background: transparent;
-  border: 0;
-  display: grid;
-  place-items: center;
-  color: var(--accent);
-}
-
-.file-prompt strong,
-.file-chosen strong {
-  display: block;
-  font-size: .9375rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.file-prompt span,
-.file-chosen span {
-  display: block;
-  font-size: .8125rem;
-  color: var(--muted);
-  margin-top: .35rem;
-}
-
-/* Progress Box */
 .progress-box {
   margin-top: 1.5rem;
   padding: 1.25rem;

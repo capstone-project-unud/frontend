@@ -1,7 +1,8 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-11-02',
   devtools: { enabled: false },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/workspace.css', '~/assets/css/capstone.css'],
+  nitro: { externals: { inline: ['xlsx'] } },
   runtimeConfig: { gatewayUrl: 'http://127.0.0.1:8080' },
   app: {
     head: {

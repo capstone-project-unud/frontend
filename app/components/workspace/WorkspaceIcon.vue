@@ -1,6 +1,10 @@
 <script setup lang="ts">
-defineProps<{ name: 'users' | 'activity' | 'profile' | 'collapse' | 'expand' | 'logout' | 'sun' | 'moon' }>()
+defineProps<{ name: 'users' | 'activity' | 'profile' | 'collapse' | 'expand' | 'logout' | 'sun' | 'moon' | 'projects' | 'sheet' | 'book' | 'document' }>()
 const paths = {
+  projects: 'M4 5h16v15H4zM8 3v4M16 3v4M8 11h8M8 15h5',
+  sheet: 'M3 4h18v16H3zM3 9h18M9 4v16M15 4v16M3 14h18',
+  book: 'M12 6v15M12 6C8 3 4 4 2 5v14c3-1 6-1 10 2M12 6c4-3 8-2 10-1v14c-3-1-6-1-10 2',
+  document: 'M5 3h9l5 5v13H5zM14 3v6h5M8 13h8M8 17h6',
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 4a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   activity: 'M4 6h16M4 12h11M4 18h14',
   profile: 'M20 21v-2a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v2M16 6a4 4 0 1 1-8 0 4 4 0 0 1 8 0',

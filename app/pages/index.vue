@@ -1,4 +1,5 @@
 <script setup lang="ts">
-await navigateTo('/admin/users', { replace: true })
+definePageMeta({ middleware: ['auth'] })
+await navigateTo('/dashboard', { replace: true })
 </script>
 <template><span /></template>

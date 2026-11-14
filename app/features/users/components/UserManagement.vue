@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceStatistics from '~/components/workspace/WorkspaceStatistics.vue'
 import { useUsers } from '../composables/useUsers'
 import UserFilters from './UserFilters.vue'
 import UserTable from './UserTable.vue'
@@ -18,7 +19,8 @@ const { data: list, status: listStatus, error: listError } = users.list
 const { data: stats, error: statsError } = users.stats
 const { message, mutationError, saving, page, params } = users
 
-const activeForm = shallowRef<'MAHASISWA' | 'DOSEN' | 'ADMIN' | null>(null)
+type AccountForm = 'MAHASISWA' | 'DOSEN' | 'ADMIN' | 'KOORDINATOR_TA' | 'TU'
+const activeForm = shallowRef<AccountForm | null>(null)
 const importModalOpen = shallowRef(false)
 const lecturerImportModalOpen = shallowRef(false)
 const cohortModalOpen = shallowRef(false)
@@ -32,7 +34,7 @@ function handleCohortSuccess(msg: string) {
   users.refresh()
 }
 
-function openCreate(role: 'MAHASISWA' | 'DOSEN' | 'ADMIN') {
+function openCreate(role: AccountForm) {
   mutationError.value = ''
   selected.value = null
   activeForm.value = role
@@ -42,11 +44,13 @@ function edit(user: User | null) {
   mutationError.value = ''
   selected.value = user
   if (!user) {
-    activeForm.value = (params.value.role as 'MAHASISWA' | 'DOSEN' | 'ADMIN') || 'MAHASISWA'
+    activeForm.value = (params.value.role as AccountForm) || 'MAHASISWA'
     return
   }
   if (user.roles.includes('ADMIN')) activeForm.value = 'ADMIN'
   else if (user.roles.includes('DOSEN') || user.roles.includes('KOPRODI')) activeForm.value = 'DOSEN'
+  else if (user.roles.includes('KOORDINATOR_TA')) activeForm.value = 'KOORDINATOR_TA'
+  else if (user.roles.includes('TU')) activeForm.value = 'TU'
   else activeForm.value = 'MAHASISWA'
 }
 
@@ -116,37 +120,25 @@ async function changeStatus() {
       Ringkasan belum dapat dimuat. <button type="button" class="button secondary btn-retry" @click="users.stats.refresh()">Coba lagi</button>
     </p>
 
-    <div class="panel statistics-panel" aria-label="Ringkasan pengguna">
-      <div class="statistics">
-        <div class="stat-item">
-          <span>Total pengguna</span>
-          <strong>{{ stats?.total ?? '—' }}</strong>
-        </div>
-        <div class="stat-item">
-          <span>Mahasiswa</span>
-          <strong>{{ stats?.students ?? '—' }}</strong>
-        </div>
-        <div class="stat-item">
-          <span>Dosen</span>
-          <strong>{{ stats?.lecturers ?? '—' }}</strong>
-        </div>
-        <div class="stat-item">
-          <span>Akun aktif</span>
-          <strong>{{ stats?.active ?? '—' }}</strong>
-        </div>
-      </div>
+    <div class="panel workspace-statistics-panel">
+      <WorkspaceStatistics label="Ringkasan pengguna" :items="[
+        { label: 'Total pengguna', value: stats?.total },
+        { label: 'Mahasiswa', value: stats?.students },
+        { label: 'Dosen', value: stats?.lecturers },
+        { label: 'Akun aktif', value: stats?.active },
+      ]" />
     </div>
 
     <p v-if="message" class="notice success feedback" role="status">{{ message }}</p>
     <p v-if="mutationError && !activeForm && !statusTarget" class="notice error feedback" role="alert">{{ mutationError }}</p>
 
     <div class="panel users-panel">
-      <div class="section-heading">
-        <div class="heading-title">
+      <div class="workspace-panel-header">
+        <div class="workspace-panel-title">
           <h2>Daftar pengguna</h2>
           <span>{{ list?.total ?? '—' }} pengguna</span>
         </div>
-        <div v-if="params.role" class="heading-actions">
+        <div v-if="params.role" class="workspace-panel-actions">
           <template v-if="params.role === 'MAHASISWA'">
             <button class="button primary" type="button" @click="openCreate('MAHASISWA')">
               <span aria-hidden="true" class="plus">+</span> Tambah Mahasiswa
@@ -231,8 +223,8 @@ async function changeStatus() {
               Unduh Template
             </button>
           </template>
-          <button v-else-if="params.role === 'ADMIN'" class="button primary" type="button" @click="openCreate('ADMIN')">
-            <span aria-hidden="true" class="plus">+</span> Tambah Admin
+          <button v-else-if="params.role === 'ADMIN' || params.role === 'KOORDINATOR_TA' || params.role === 'TU'" class="button primary" type="button" @click="openCreate(params.role)">
+            <span aria-hidden="true" class="plus">+</span> Tambah {{ params.role === 'TU' ? 'Tata usaha' : params.role === 'KOORDINATOR_TA' ? 'Koordinator TA' : 'Admin' }}
           </button>
         </div>
       </div>
@@ -256,13 +248,13 @@ async function changeStatus() {
         <p>{{ params.q || params.status || params.admission_year ? 'Coba kata kunci lain atau atur ulang filter Anda.' : 'Data pengguna untuk peran ini belum tersedia dalam sistem.' }}</p>
       </div>
 
-      <div class="pagination">
+      <div class="workspace-pagination">
         <span>{{ list?.total ? `Halaman ${page} dari ${pages}` : 'Tidak ada hasil' }}</span>
         <div>
-          <button class="button pager" :disabled="page <= 1 || listStatus === 'pending'" aria-label="Halaman sebelumnya" @click="page--">
+          <button class="button workspace-pager" :disabled="page <= 1 || listStatus === 'pending'" aria-label="Halaman sebelumnya" @click="page--">
             Sebelumnya
           </button>
-          <button class="button pager" :disabled="page >= pages || listStatus === 'pending'" aria-label="Halaman berikutnya" @click="page++">
+          <button class="button workspace-pager" :disabled="page >= pages || listStatus === 'pending'" aria-label="Halaman berikutnya" @click="page++">
             Berikutnya
           </button>
         </div>
@@ -289,7 +281,8 @@ async function changeStatus() {
       @close="closeForm"
     />
     <AdminForm
-      v-else-if="activeForm === 'ADMIN'"
+      v-else-if="activeForm === 'ADMIN' || activeForm === 'TU' || activeForm === 'KOORDINATOR_TA'"
+      :account-role="activeForm"
       :user="selected"
       :busy="saving"
       :error="mutationError"
@@ -333,82 +326,9 @@ async function changeStatus() {
 
 <style scoped>
 .plus { font-size: 1.25rem; font-weight: 400; line-height: 1; }
-.statistics-panel {
-  padding: 1.75rem 2rem;
-  margin-bottom: 2rem;
-}
-.statistics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.stat-item {
-  padding-left: 2rem;
-  border-left: 1px solid var(--line);
-}
-.stat-item:first-child {
-  padding-left: 0;
-  border: 0;
-}
-.stat-item > span {
-  font-size: .9375rem;
-  color: var(--muted);
-}
-.stat-item strong {
-  display: flex;
-  gap: .75rem;
-  align-items: center;
-  margin-top: .5rem;
-  font-size: 2.25rem;
-  letter-spacing: -.04em;
-  font-weight: 500;
-  line-height: 1.15;
-}
 .feedback { margin-bottom: 1.25rem; }
 .btn-retry { min-height: 32px; padding: .25rem .75rem; font-size: .875rem; margin-left: .5rem; }
 .users-panel { min-width: 0; container: users / inline-size; }
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  padding: 1.5rem 1.5rem 1rem;
-  flex-wrap: wrap;
-}
-.heading-title {
-  display: flex;
-  align-items: baseline;
-  gap: .75rem;
-}
-.heading-title h2 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: -.02em;
-}
-.heading-title > span {
-  color: var(--muted);
-  font-size: .875rem;
-}
-.heading-actions {
-  display: flex;
-  align-items: center;
-  gap: .625rem;
-  flex-wrap: wrap;
-}
-.pagination {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--line);
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-  font-size: .875rem;
-  color: var(--muted);
-}
-.pagination > div { display: flex; gap: .5rem; }
-.pager { font-size: .875rem; background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 10px; padding: .5rem .85rem; transition: all 150ms ease; }
-.pager:not(:disabled):hover { border-color: var(--border-hover); background: var(--panel-hover); }
-.pager:disabled { background: var(--canvas); border-color: var(--line); color: var(--muted); cursor: default; opacity: .45; }
 .confirm-dialog {
   width: min(460px, calc(100% - 2rem));
   padding: 2rem;
@@ -423,23 +343,4 @@ async function changeStatus() {
 .confirm-dialog p { margin-top: 1rem; font-size: 1rem; line-height: 1.65; color: var(--muted); }
 .confirm-dialog > div { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
 
-@media (min-width: 768px) and (max-width: 1199px) {
-  .statistics-panel { padding: 1.5rem 1.5rem; }
-  .stat-item { padding-left: 1.25rem; }
-  .page-heading { flex-direction: column; align-items: flex-start; }
-}
-
-@media (max-width: 767px) {
-  .statistics-panel { padding: 1.25rem; margin-bottom: 1.5rem; }
-  .statistics {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem 1rem;
-  }
-  .stat-item { padding-left: 1rem; }
-  .stat-item:nth-child(odd) { padding-left: 0; border: 0; }
-  .stat-item strong { font-size: 1.875rem; }
-  .section-heading { padding: 1.25rem 1rem .75rem; }
-  .heading-actions { width: 100%; }
-  .pagination { padding: 1rem; }
-}
 </style>

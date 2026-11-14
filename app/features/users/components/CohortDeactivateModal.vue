@@ -30,8 +30,6 @@ const isExecuting = shallowRef(false)
 const errorMessage = shallowRef('')
 const confirmDialogOpen = shallowRef(false)
 
-// Mock/Simulated Capstone Academic Status check based on student data & records
-// In full production, this links with project stage & revision tables.
 interface StudentAcademicStatus {
   hasActiveProject: boolean
   stageLabel: string
@@ -47,28 +45,10 @@ function getAcademicStatus(student: User): StudentAcademicStatus {
     }
   }
 
-  // Realistic deterministic heuristic for demonstration:
-  // In Capstone Unud, students with even NIM endings or specific test profiles
-  // may have extended study or active revisions.
-  const num = parseInt(student.nim?.slice(-2) || '0', 10)
-  if (num % 5 === 0) {
-    return {
-      hasActiveProject: true,
-      stageLabel: 'Masa Revisi Ujian Akhir',
-      stageType: 'revision',
-    }
-  } else if (num % 3 === 0) {
-    return {
-      hasActiveProject: true,
-      stageLabel: 'Tahap Pengerjaan / Bimbingan',
-      stageType: 'in_progress',
-    }
-  }
-
   return {
-    hasActiveProject: false,
-    stageLabel: 'Yudisium / Capstone Selesai',
-    stageType: 'completed',
+    hasActiveProject: true,
+    stageLabel: 'Kelulusan belum diverifikasi',
+    stageType: 'in_progress',
   }
 }
 
@@ -91,7 +71,7 @@ function getDeactivationCategory(student: User) {
     return {
       label: 'Belum Boleh Dinonaktifkan',
       type: 'protected',
-      tooltip: 'Diproteksi otomatis: Mahasiswa masih memiliki proyek berjalan atau masa revisi',
+      tooltip: 'Kelulusan belum tercatat. Status lulus tidak dapat disimpulkan dari NIM atau angkatan.',
     }
   }
   return {

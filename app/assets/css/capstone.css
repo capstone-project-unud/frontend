@@ -1,0 +1,57 @@
+.cap-stack { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+.cap-section { display: grid; gap: 1.25rem; padding: 1.5rem; min-width: 0; }
+.cap-section h2 { font-size: 1.125rem; font-weight: 600; line-height: 1.5; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.cap-section h3 { font-size: 1.0625rem; font-weight: 600; }.cap-section h4 { font-size: .9375rem; margin: 0 0 .75rem; }
+.cap-section legend { font-size: 1.125rem; font-weight: 600; padding: 0 .5rem; }.cap-form { display: grid; gap: 2rem; }
+.cap-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 1.25rem; }
+.cap-section .field label { font-size: .875rem; color: var(--ink); margin-bottom: .35rem; }
+.cap-section .check-field { align-items: flex-start; padding: .875rem 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+.cap-section .check-field:hover { background: var(--panel-hover); border-color: var(--border-hover); }
+.cap-section .check-field input { flex-shrink: 0; margin-top: .2rem; }
+.cap-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }.cap-actions input { flex: 1 1 12rem; width: auto; }
+.cap-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; }
+.cap-section-heading>div { min-width: 0; }.cap-section-heading p { margin-top: .5rem; }
+.cap-feedback { margin-block: 1rem; }.cap-loading { padding: 2rem 1.5rem; color: var(--muted); }
+.cap-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; }.cap-filters .field { flex: 1 1 12rem; }
+.cap-table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--border); border-radius: 12px; }
+.cap-table strong { font-weight: 600; }
+.cap-table td:first-child { min-width: 15rem; max-width: 32rem; }.cap-table td:last-child { white-space: nowrap; }
+.cap-table small,.decision-columns small { display: block; margin-top: .4rem; font-size: .875rem; color: var(--muted); }
+.cap-table td>div+div { margin-top: .75rem; }.cap-table .button { margin-top: .5rem; }
+.finalization-table { min-width: 1050px; }.finalization-table td:last-child { white-space: normal; }.finalization-table td { min-width: 190px; }.finalization-table .workspace-select { min-width: 210px; }.finalization-table th[scope=row] { min-width: 180px; }
+.cap-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding-block: 1rem; font-size: .9375rem; }
+.cap-link { color: var(--accent); text-decoration: underline; }.cap-preserve { white-space: pre-wrap; overflow-wrap: anywhere; }
+.member-row { display: grid; gap: 1rem; border-top: 1px solid var(--line); padding-top: 1.5rem; }
+.decision-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.5rem; }.decision-columns .cap-actions { margin-top: .75rem; }
+.cap-review { display: grid; gap: 1rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+.cap-history { margin: 0; padding-left: 1.25rem; }.cap-history li { padding: .6rem; }.cap-history time { color: var(--muted); display: block; font-size: .875rem; }
+.cap-description { margin: 0; display: grid; gap: .4rem; }.cap-description dt { font-weight: 600; }.cap-description dd { margin: 0 0 .75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cap-success { color: var(--success); }
+.cap-dialog { padding: 2rem; background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 24px; width: min(580px,calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; box-shadow: 0 24px 64px -12px rgba(25,20,50,.22); }
+.cap-dialog::backdrop { background: #17152180; backdrop-filter: blur(6px); }.cap-dialog form { display: grid; gap: 1.5rem; }.cap-dialog h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.03em; }
+.cap-dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; flex-wrap: wrap; border-top: 1px solid var(--line); background: var(--canvas); padding: 1.25rem 2rem; margin: 0 -2rem -2rem; }
+.cap-dialog-actions .primary { box-shadow: 0 4px 14px rgba(103,65,207,.28); }
+.cap-plus { font-size: 1.25rem; font-weight: 400; line-height: 1; }
+.cap-list-panel { min-width: 0; overflow: hidden; container: cap-records / inline-size; }
+.cap-list-panel .cap-table-wrap { border: 0; border-radius: 0; }
+.cap-list-panel .cap-table-wrap:focus-visible { outline-offset: -3px; }
+.cap-table th:last-child,.cap-table td:last-child { padding-right: 1.5rem; }
+.cap-table .cap-action-heading,.cap-table .cap-row-actions { text-align: right; }
+.cap-row-actions .workspace-text-action { white-space: nowrap; }
+.cap-panel-feedback { margin: 0 1.5rem 1.25rem; }
+.cap-panel-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--line); }
+.cap-project-heading { min-width: 0; flex: 1 1 18rem; }
+.cap-project-heading h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.cap-project-heading p { margin-top: .5rem; }
+.cap-toolbar-hint { font-size: .875rem; }
+.cap-pagination-panel { margin-top: 1.5rem; }
+form.cap-section { margin-bottom: 1.5rem; }
+@container cap-records (max-width:700px) {
+  .cap-record-table,.cap-record-table tbody { display: block; }
+  .cap-record-table thead { display: none; }
+  .cap-record-table tbody tr { display: grid; grid-template-columns: minmax(0,1fr) auto; padding: 1.25rem 1rem; gap: .75rem; border-top: 1px solid var(--line); }
+  .cap-record-table td,.cap-record-table td:first-child,.cap-record-table td:last-child { padding: 0; border: 0; min-width: 0; max-width: none; white-space: normal; }
+  .cap-record-table td:first-child { grid-column: 1 / -1; }
+  .cap-record-table .cap-row-actions { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: .5rem; }
+}
+@media(max-width:767px) { .cap-section { padding: 1.25rem; }.decision-columns { grid-template-columns: minmax(0,1fr); }.cap-filters { align-items: stretch; }.cap-filters .field { flex-basis: 100%; }.cap-pagination>.cap-actions { width: 100%; }.cap-dialog { padding: 1.25rem; }.cap-dialog-actions { margin: 0 -1.25rem -1.25rem; padding: 1rem 1.25rem; }.cap-panel-footer { padding: 1rem; }.cap-panel-feedback { margin-inline: 1rem; } }

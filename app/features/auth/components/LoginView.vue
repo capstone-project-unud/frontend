@@ -13,7 +13,7 @@ async function submit(email: string, password: string) {
   error.value = ''
   try {
     await auth.login(email, password)
-    await navigateTo(auth.user.value?.roles.includes('ADMIN') ? '/admin/users' : '/account')
+    await navigateTo('/dashboard')
   } catch (e) { error.value = apiMessage(e) }
   finally { busy.value = false }
 }

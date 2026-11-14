@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'MAHASISWA' | 'DOSEN' | 'KOPRODI'
+export type Role = 'ADMIN' | 'MAHASISWA' | 'DOSEN' | 'KOPRODI' | 'KOORDINATOR_TA' | 'TU'
 export interface User {
   id: string
   full_name: string

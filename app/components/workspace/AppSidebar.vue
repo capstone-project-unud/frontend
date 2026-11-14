@@ -2,24 +2,32 @@
 import { initials } from '~/utils/format'
 import { useTheme } from '~/composables/useTheme'
 import WorkspaceIcon from './WorkspaceIcon.vue'
+import { useAuth } from '~/features/auth/composables/useAuth'
 
 const props = defineProps<{ collapsed: boolean; isAdmin: boolean; fullName: string; busy: boolean }>()
 defineEmits<{ toggle: []; logout: [] }>()
 
 const { isDark, toggle } = useTheme()
 
+const auth = useAuth()
 const navigation = [
-  { to: '/admin/users', label: 'Manajemen pengguna', icon: 'users' },
-  { to: '/account', label: 'Profil saya', icon: 'profile' },
+  { to: '/dashboard', label: 'Dashboard', icon: 'activity', roles: [] },
+  { to: '/capstone', label: 'Judul capstone', icon: 'projects', roles: [] },
+  { to: '/finalization', label: 'Finalisasi judul', icon: 'sheet', roles: ['KOORDINATOR_TA'] },
+  { to: '/guidance', label: 'Log bimbingan', icon: 'book', roles: ['MAHASISWA', 'DOSEN', 'KOORDINATOR_TA', 'ADMIN'] },
+  { to: '/proposal', label: 'Persyaratan UP', icon: 'document', roles: ['MAHASISWA', 'TU', 'KOORDINATOR_TA', 'ADMIN'] },
+  { to: '/admin/interests', label: 'Bidang minat', icon: 'activity', roles: ['ADMIN', 'KOORDINATOR_TA'] },
+  { to: '/admin/users', label: 'Manajemen pengguna', icon: 'users', roles: ['ADMIN'] },
+  { to: '/account', label: 'Profil saya', icon: 'profile', roles: [] },
 ] as const
-const links = computed(() => navigation.filter(item => props.isAdmin || item.to === '/account'))
+const links = computed(() => navigation.filter(item => !item.roles.length || item.roles.some(role => auth.user.value?.roles.some(r => r === role))))
 const toggleLabel = computed(() => props.collapsed ? 'Perluas sidebar' : 'Minimalkan sidebar')
 </script>
 
 <template>
   <aside id="workspace-sidebar" class="sidebar" :class="{ 'is-collapsed': collapsed }" aria-label="Menu aplikasi">
     <div class="sidebar-header">
-      <NuxtLink :to="isAdmin ? '/admin/users' : '/account'" class="brand" aria-label="Capstone"><span v-if="collapsed" aria-hidden="true">c.</span><span v-else>capstone.</span></NuxtLink>
+      <NuxtLink to="/dashboard" class="brand" aria-label="Capstone"><span v-if="collapsed" aria-hidden="true">c.</span><span v-else>capstone.</span></NuxtLink>
       <button type="button" class="sidebar-toggle" :aria-label="toggleLabel" :title="toggleLabel" :aria-expanded="!collapsed" aria-controls="workspace-navigation" @click="$emit('toggle')"><WorkspaceIcon :name="collapsed ? 'expand' : 'collapse'" /></button>
     </div>
     <nav id="workspace-navigation" class="navigation" aria-label="Navigasi utama">
@@ -67,7 +75,10 @@ const toggleLabel = computed(() => props.collapsed ? 'Perluas sidebar' : 'Minima
   .brand { font-size: 1.75rem; }
   .navigation { flex-direction: row; flex-wrap: wrap; padding-top: .875rem; gap: .375rem; }
   .navigation a { padding: .75rem; }
-  .sidebar-bottom { display: none; }
+  .sidebar-bottom { padding-top: .5rem; flex-direction: row; flex-wrap: wrap; }
+  .current-user { display: none; }
+  .theme-toggle-button,.logout-button { width: auto; }
+  .is-collapsed .sidebar-bottom { display: none; }
   .is-collapsed .navigation { display: none; }
 }
 </style>

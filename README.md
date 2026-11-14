@@ -2,7 +2,7 @@
 
 Repositori ini memuat antarmuka web Sistem Layanan Capstone Project Program Studi Teknologi Informasi, Universitas Udayana. Aplikasi dikembangkan menggunakan Nuxt 4, Vue 3, dan TypeScript dengan pengelompokan kode berdasarkan fitur.
 
-Implementasi saat ini mencakup autentikasi, pengelolaan profil pribadi, serta halaman administrasi pengguna. Mahasiswa dan dosen menggunakan akun yang dibuat oleh administrator sesuai SOP registrasi pengguna.
+Implementasi mencakup autentikasi, profil, admin lima peran, pendaftaran/detail judul, tabel finalisasi, log bimbingan, persyaratan/verifikasi UP, dan bidang minat. Semua akun dibuat admin. [Cakupan wajib](../docs/implementasi-mandatory.md) dan [konfigurasi API/storage](../infrastructure/docs/capstone-workflow.md) menjelaskan alur lintas layanan.
 
 ## Ruang Lingkup
 

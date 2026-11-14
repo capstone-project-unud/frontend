@@ -73,6 +73,30 @@ Spasi: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px. Label–input 8–10 px, antar f
 
 ## Komposisi dan perilaku
 
+### Acuan seluruh halaman ruang kerja
+
+Manajemen pengguna (`/admin/users`) menjadi acuan visual utama sesuai arahan pemilik. Dashboard, daftar/detail/form judul, finalisasi, bimbingan, proposal, dan bidang minat mengikuti Urbanist, token tema, ukuran panel, tabel, tombol, formulir, dan status halaman ini.
+
+- Judul halaman berisi judul dan satu penjelasan; tindakan utama berada di header panel tempat pekerjaan dilakukan.
+- Header panel memakai padding 24 px, judul 18 px, jumlah hasil 14 px, dan kelompok tombol dengan jarak 10 px. Ponsel menggunakan padding horizontal 16 px dan tombol dapat turun ke baris berikutnya.
+- Ringkasan memakai satu panel dengan garis pemisah, angka 36 px, serta dua kolom pada ponsel. `WorkspaceStatistics` dipakai oleh User Management dan dashboard.
+- Pencarian memakai `WorkspaceSearch`: ikon kiri, latar canvas, border/radius 12 px, tombol Cari di dalam kolom, hapus pencarian, dan focus ring. Seluruh dropdown memakai `WorkspaceSelect`, termasuk filter User Management, agar menu terbuka juga mengikuti tema. Navigasi Arrow/Home/End, Enter/Space, pencarian berdasarkan huruf, Tab, dan Escape ditangani komponen; opsi aktif dan terpilih memiliki status ARIA.
+- Tabel pengguna dan tabel capstone memakai dasar `.workspace-table`: header canvas/teks muted 14 px, isi 15 px, tinggi baris dan hover sama. Daftar judul/bidang minat disusun ulang menjadi baris bertumpuk pada panel sempit. Finalisasi tetap tabel bergeser karena membandingkan penetapan antarkolom.
+- Aksi per baris berupa tautan/tombol teks. Status berupa teks berwarna dengan label eksplisit, mengikuti status pada tabel pengguna. Tombol tambah/submit tetap solid ungu, ekspor sekunder, pagination berbatas.
+- Bidang minat memakai tombol tambah di header daftar dan editor dialog. Form akademik yang panjang tetap halaman tersendiri dengan hierarki label, jarak field, dan tindakan yang sama.
+
+Gaya bersama berada di `app/assets/css/workspace.css`; `capstone.css` menyimpan kebutuhan akademik seperti tabel finalisasi, detail bimbingan, dan keputusan pembimbing. Tujuannya agar perubahan gaya acuan turut berlaku pada fitur lain, tanpa menggandakan tema per halaman.
+
+### Kontrol kustom
+
+Dropdown, kalender, unggah berkas, dan checkbox tidak menampilkan kulit bawaan browser. `WorkspaceSelect` menyediakan trigger dan daftar pilihan. `WorkspaceDatePicker` menyediakan kalender Indonesia, awal pekan Senin, pemilihan bulan/tahun, Hari ini, dan navigasi tanggal dengan keyboard. Nilai yang dikirim ke API tetap ISO YYYY-MM-DD; tanggal bimbingan dibatasi mengikuti API.
+
+Menu dan kalender menggunakan [HTML Popover](https://html.spec.whatwg.org/multipage/popover.html) dengan seluruh permukaan, radius, warna, dan item digambar oleh CSS proyek. Top layer mencegah menu terpotong panel bergulir atau tertutup dialog. Tidak memakai popup select/date bawaan browser. Validasi required tetap terhubung ke formulir dan fokus diarahkan ke kontrol yang perlu diisi.
+
+`WorkspaceFilePicker` dipakai pada unggahan akademik dan impor mahasiswa/dosen: tombol berikon, nama berkas, hint format/ukuran, drag-and-drop, validasi awal, serta status disabled/busy. Input file disembunyikan; dialog pemilihan berkas milik sistem operasi tetap digunakan untuk mengakses berkas lokal. Isi dan signature berkas akademik tetap diperiksa API.
+
+Checkbox memakai appearance none, border dan indikator centang dari CSS proyek; number input tidak menampilkan spinner browser. Semua kontrol memakai token tema, focus ring, dan ukuran teks yang sama dengan User Management. Tidak menambahkan library UI atau tanggal.
+
 - **Login**: ilustrasi arsitektur kampus Bali berbasis SVG bidang sage penuh, judul editorial di bawah. Form email dan kata sandi, toggle tampil/sembunyikan sandi, tombol Masuk, bantuan akses yang menjelaskan akun dibuat admin.
 - **Card Ringkasan Statistik**: metrik statistik (Total pengguna, Mahasiswa, Dosen, Akun aktif) dibungkus dalam card panel putih (`.panel.statistics-panel`) dengan sudut membulat 20 px, padding proporsional, dan garis pemisah vertikal antar metrik yang responsif di desktop maupun ponsel.
 - **Daftar Pengguna & Tindakan Tambah**:

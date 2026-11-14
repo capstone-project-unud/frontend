@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { User, UserInput } from '~/types/user'
+import type { Role, User, UserInput } from '~/types/user'
 import UserPasswordReset from './UserPasswordReset.vue'
 
-const props = defineProps<{ user: User | null; busy: boolean; error: string }>()
+const props = withDefaults(defineProps<{ user: User | null; busy: boolean; error: string; accountRole?: 'ADMIN' | 'KOORDINATOR_TA' | 'TU' }>(), { accountRole: 'ADMIN' })
+const roleName = computed(() => ({ ADMIN: 'Administrator', KOORDINATOR_TA: 'Koordinator TA', TU: 'Tata usaha' })[props.accountRole])
 const emit = defineEmits<{ save: [input: UserInput]; reset: [password: string]; close: [] }>()
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 
@@ -26,7 +27,7 @@ function save() {
   emit('save', {
     full_name: form.full_name,
     email: form.email,
-    roles: ['ADMIN'],
+    roles: [props.accountRole as Role],
     nim: null,
     admission_year: null,
     nip: null,
@@ -43,9 +44,9 @@ function save() {
   <dialog ref="dialog" class="editor-dialog" aria-labelledby="admin-editor-title" @cancel.prevent="close">
     <div class="dialog-header">
       <div class="header-text">
-        <h2 id="admin-editor-title">{{ user ? 'Ubah Administrator' : 'Tambah Administrator' }}</h2>
+        <h2 id="admin-editor-title">{{ user ? 'Ubah ' : 'Tambah ' }}{{ roleName }}</h2>
         <p class="dialog-intro">
-          {{ user ? 'Perbarui informasi akun administrator sistem.' : 'Tambahkan akun administrator baru ke dalam sistem.' }}
+          {{ user ? 'Perbarui informasi akun pengguna.' : 'Buat akun sesuai peran dan sampaikan kata sandi awal secara pribadi.' }}
         </p>
       </div>
       <button class="close-button" type="button" aria-label="Tutup formulir" :disabled="busy" @click="close">

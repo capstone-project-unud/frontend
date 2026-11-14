@@ -7,6 +7,7 @@ const emit = defineEmits<{ save: [input: UserInput]; reset: [password: string]; 
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 
 const koprodi = shallowRef(props.user?.roles.includes('KOPRODI') || false)
+const coordinator = shallowRef(props.user?.roles.includes('KOORDINATOR_TA') || false)
 const form = reactive({
   full_name: props.user?.full_name || '',
   email: props.user?.email || '',
@@ -29,6 +30,7 @@ function close() {
 function save() {
   const roles: Role[] = ['DOSEN']
   if (koprodi.value) roles.push('KOPRODI')
+  if (coordinator.value) roles.push('KOORDINATOR_TA')
 
   emit('save', {
     full_name: form.full_name,
@@ -91,9 +93,10 @@ function save() {
               <input v-model="koprodi" type="checkbox" class="modern-checkbox">
               <div class="check-text">
                 <strong>Tetapkan peran Koordinator Program Studi (Koprodi)</strong>
-                <span>Dosen ini akan memiliki hak kelola akademik dan plotting pembimbing</span>
+                  <span>Jabatan Koprodi terpisah dari kewenangan koordinator TA.</span>
               </div>
             </label>
+              <label class="check-card full"><input v-model="coordinator" type="checkbox" class="modern-checkbox"><div class="check-text"><strong>Tetapkan peran Koordinator TA/Capstone</strong><span>Dapat memvalidasi judul, menetapkan pembimbing per mahasiswa, dan memfinalisasi judul.</span></div></label>
 
             <div class="field full">
               <label for="lecturer-phone">Nomor telepon <span class="optional">(opsional)</span></label>

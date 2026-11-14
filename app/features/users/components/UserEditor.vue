@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
+
 import type { Role, User, UserInput } from '~/types/user'
 import UserPasswordReset from './UserPasswordReset.vue'
 const props = defineProps<{ user: User | null; busy: boolean; error: string }>()
 const emit = defineEmits<{ save: [input: UserInput]; reset: [password: string]; close: [] }>()
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 const baseRole = shallowRef<'MAHASISWA' | 'DOSEN'>(props.user?.roles.includes('DOSEN') ? 'DOSEN' : 'MAHASISWA')
+const roleOptions: { value: 'MAHASISWA' | 'DOSEN'; label: string }[] = [{ value: 'MAHASISWA', label: 'Mahasiswa' }, { value: 'DOSEN', label: 'Dosen' }]
 const koprodi = shallowRef(props.user?.roles.includes('KOPRODI') || false)
 const form = reactive({ full_name: props.user?.full_name || '', email: props.user?.email || '', nim: props.user?.nim || '', admission_year: props.user?.admission_year || new Date().getFullYear(), nip: props.user?.nip || '', nidn: props.user?.nidn || '', phone: props.user?.phone || '', expertise: props.user?.expertise || '', password: '', is_active: props.user?.is_active ?? true })
 const visible = shallowRef(false)
@@ -22,7 +25,7 @@ function save() {
   <dialog ref="dialog" class="editor-dialog" aria-labelledby="editor-title" @cancel.prevent="close">
     <div class="dialog-header"><h2 id="editor-title">{{ user ? 'Ubah pengguna' : 'Tambah pengguna' }}</h2><button class="close-button" type="button" aria-label="Tutup formulir" :disabled="busy" @click="close">×</button></div>
     <form @submit.prevent="save"><div class="dialog-body"><p class="dialog-intro">{{ user ? 'Perbarui informasi akun dan identitas akademik pengguna.' : 'Siapkan akun untuk mahasiswa atau dosen program studi.' }}</p><fieldset :disabled="busy"><div class="field-grid">
-      <div class="field full"><label for="user-role">Jenis pengguna</label><select id="user-role" v-model="baseRole"><option value="MAHASISWA">Mahasiswa</option><option value="DOSEN">Dosen</option></select></div>
+      <div class="field full"><label for="user-role">Jenis pengguna</label><WorkspaceSelect id="user-role" v-model="baseRole" label="Jenis pengguna" :options="roleOptions" :disabled="busy" /></div>
       <div class="field full"><label for="user-name">Nama lengkap</label><input id="user-name" v-model="form.full_name" autocomplete="name" required minlength="2" maxlength="150" placeholder="Nama lengkap pengguna"></div>
       <div class="field full"><label for="user-email">Email</label><input id="user-email" v-model="form.email" type="email" autocomplete="email" required maxlength="254" placeholder="nama@unud.ac.id"></div>
       <template v-if="baseRole === 'MAHASISWA'"><div class="field"><label for="user-nim">NIM</label><input id="user-nim" v-model="form.nim" required maxlength="30" placeholder="Nomor induk mahasiswa"></div><div class="field"><label for="user-year">Tahun angkatan</label><input id="user-year" v-model="form.admission_year" type="number" required min="2000" :max="new Date().getFullYear() + 1"></div></template>
