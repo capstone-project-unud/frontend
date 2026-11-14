@@ -3,11 +3,18 @@ import { apiMessage } from '~/utils/format'
 
 export function useUsers() {
   const query = shallowRef('')
-  const role = shallowRef<Role | ''>('')
+  const role = shallowRef<Role>('MAHASISWA')
   const status = shallowRef('')
+  const year = shallowRef<number | ''>('')
   const page = shallowRef(1)
   const api = useRequestFetch()
-  const params = computed(() => ({ q: query.value, role: role.value, status: status.value, page: page.value }))
+  const params = computed(() => ({
+    q: query.value,
+    role: role.value,
+    status: status.value,
+    admission_year: year.value ? String(year.value) : '',
+    page: page.value,
+  }))
   const list = useAsyncData('user-list', () => api<UserList>('/api/v1/users', { query: params.value }), { watch: [params] })
   const stats = useAsyncData('user-stats', () => api<UserStats>('/api/v1/users/stats'))
   const saving = shallowRef(false)
@@ -40,10 +47,30 @@ export function useUsers() {
     } catch (e) { mutationError.value = apiMessage(e); return false }
     finally { saving.value = false }
   }
-  function filters(next: { q: string; role: Role | ''; status: string }) {
+  async function batchSetStatus(userIds: string[], isActive: boolean) {
+    if (saving.value || userIds.length === 0) return 0
+    saving.value = true
+    mutationError.value = ''
+    message.value = ''
+    try {
+      const res = await $fetch<{ updated_count: number }>('/api/v1/users/batch-status', {
+        method: 'PATCH',
+        body: { user_ids: userIds, is_active: isActive },
+      })
+      await refresh()
+      return res.updated_count
+    } catch (e) {
+      mutationError.value = apiMessage(e)
+      return 0
+    } finally {
+      saving.value = false
+    }
+  }
+  function filters(next: { q: string; role: Role | ''; status: string; admission_year?: number | '' }) {
     query.value = next.q
-    role.value = next.role
+    role.value = (next.role as Role) || 'MAHASISWA'
     status.value = next.status
+    year.value = next.admission_year ?? ''
     page.value = 1
   }
   async function resetPassword(user: User, password: string) {
@@ -57,5 +84,5 @@ export function useUsers() {
     } catch (error) { mutationError.value = apiMessage(error); return false }
     finally { saving.value = false }
   }
-  return { list, stats, params, page, saving, mutationError, message, filters, save, setStatus, resetPassword, refresh }
+  return { list, stats, params, page, saving, mutationError, message, filters, save, setStatus, batchSetStatus, resetPassword, refresh }
 }

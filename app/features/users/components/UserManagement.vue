@@ -2,64 +2,444 @@
 import { useUsers } from '../composables/useUsers'
 import UserFilters from './UserFilters.vue'
 import UserTable from './UserTable.vue'
-import UserEditor from './UserEditor.vue'
+import StudentForm from './StudentForm.vue'
+import LecturerForm from './LecturerForm.vue'
+import AdminForm from './AdminForm.vue'
+import StudentImportModal from './StudentImportModal.vue'
+import LecturerImportModal from './LecturerImportModal.vue'
+import CohortDeactivateModal from './CohortDeactivateModal.vue'
 import type { User, UserInput } from '~/types/user'
 import { apiMessage } from '~/utils/format'
+import { downloadStudentTemplate, exportStudentsToCsv } from '~/utils/studentExportImport'
+import { downloadLecturerTemplate, exportLecturersToExcel } from '~/utils/lecturerExportImport'
+
 const users = useUsers()
 const { data: list, status: listStatus, error: listError } = users.list
 const { data: stats, error: statsError } = users.stats
 const { message, mutationError, saving, page, params } = users
-const editorOpen = shallowRef(false)
+
+const activeForm = shallowRef<'MAHASISWA' | 'DOSEN' | 'ADMIN' | null>(null)
+const importModalOpen = shallowRef(false)
+const lecturerImportModalOpen = shallowRef(false)
+const cohortModalOpen = shallowRef(false)
 const selected = shallowRef<User | null>(null)
 const statusTarget = shallowRef<User | null>(null)
 const confirmDialog = useTemplateRef<HTMLDialogElement>('confirmDialog')
 const pages = computed(() => Math.max(1, Math.ceil((list.value?.total || 0) / 12)))
-function edit(user: User | null) { mutationError.value = ''; selected.value = user; editorOpen.value = true }
-async function save(input: UserInput) { if (await users.save(input, selected.value)) editorOpen.value = false }
-async function resetPassword(password: string) { if (selected.value && await users.resetPassword(selected.value, password)) editorOpen.value = false }
-async function confirmStatus(user: User) { mutationError.value = ''; statusTarget.value = user; await nextTick(); confirmDialog.value?.showModal() }
-function cancelStatus() { if (!saving.value) { confirmDialog.value?.close(); statusTarget.value = null } }
-async function changeStatus() { if (statusTarget.value && await users.setStatus(statusTarget.value)) { confirmDialog.value?.close(); statusTarget.value = null } }
+
+function handleCohortSuccess(msg: string) {
+  message.value = msg
+  users.refresh()
+}
+
+function openCreate(role: 'MAHASISWA' | 'DOSEN' | 'ADMIN') {
+  mutationError.value = ''
+  selected.value = null
+  activeForm.value = role
+}
+
+function edit(user: User | null) {
+  mutationError.value = ''
+  selected.value = user
+  if (!user) {
+    activeForm.value = (params.value.role as 'MAHASISWA' | 'DOSEN' | 'ADMIN') || 'MAHASISWA'
+    return
+  }
+  if (user.roles.includes('ADMIN')) activeForm.value = 'ADMIN'
+  else if (user.roles.includes('DOSEN') || user.roles.includes('KOPRODI')) activeForm.value = 'DOSEN'
+  else activeForm.value = 'MAHASISWA'
+}
+
+function closeForm() {
+  activeForm.value = null
+  selected.value = null
+}
+
+function handleExportStudents() {
+  const students = (list.value?.items || []).filter(u => u.roles.includes('MAHASISWA'))
+  if (!students.length) {
+    message.value = 'Tidak ada data mahasiswa untuk diekspor.'
+    return
+  }
+  exportStudentsToCsv(students)
+}
+
+function handleExportLecturers() {
+  const lecturers = (list.value?.items || []).filter(u => u.roles.includes('DOSEN'))
+  if (!lecturers.length) {
+    message.value = 'Tidak ada data dosen untuk diekspor.'
+    return
+  }
+  exportLecturersToExcel(lecturers)
+}
+
+async function save(input: UserInput) {
+  if (await users.save(input, selected.value)) closeForm()
+}
+
+async function resetPassword(password: string) {
+  if (selected.value && await users.resetPassword(selected.value, password)) closeForm()
+}
+
+async function confirmStatus(user: User) {
+  mutationError.value = ''
+  statusTarget.value = user
+  await nextTick()
+  confirmDialog.value?.showModal()
+}
+
+function cancelStatus() {
+  if (!saving.value) {
+    confirmDialog.value?.close()
+    statusTarget.value = null
+  }
+}
+
+async function changeStatus() {
+  if (statusTarget.value && await users.setStatus(statusTarget.value)) {
+    confirmDialog.value?.close()
+    statusTarget.value = null
+  }
+}
 </script>
 
 <template>
-  <section aria-labelledby="users-heading"><div class="page-heading"><div><h1 id="users-heading">Manajemen pengguna</h1><p>Kelola akun, identitas akademik, dan akses pengguna.</p></div><button class="button primary" @click="edit(null)"><span aria-hidden="true" class="plus">+</span>Tambah pengguna</button></div>
-    <p v-if="statsError" class="notice error" role="alert">Ringkasan belum dapat dimuat. <button class="text-button" @click="users.stats.refresh()">Coba lagi</button></p>
-    <div class="statistics" aria-label="Ringkasan pengguna"><div><span>Total pengguna</span><strong>{{ stats?.total ?? '—' }}</strong></div><div><span>Mahasiswa</span><strong>{{ stats?.students ?? '—' }}</strong></div><div><span>Dosen</span><strong>{{ stats?.lecturers ?? '—' }}</strong></div><div><span>Akun aktif</span><strong>{{ stats?.active ?? '—' }}</strong></div></div>
-    <p v-if="message" class="notice success feedback" role="status">{{ message }}</p><p v-if="mutationError && !editorOpen && !statusTarget" class="notice error feedback" role="alert">{{ mutationError }}</p>
-    <div class="panel users-panel"><div class="section-heading"><h2>Daftar pengguna</h2><span>{{ list?.total ?? '—' }} pengguna</span></div><UserFilters :query="params" @change="users.filters" />
-      <div v-if="listStatus === 'pending'" class="empty-state" role="status"><p>Memuat daftar pengguna…</p></div>
-      <div v-else-if="listError" class="empty-state"><h3>Daftar belum dapat dimuat</h3><p>{{ apiMessage(listError) }}</p><button class="button secondary" @click="users.refresh">Coba lagi</button></div>
-      <UserTable v-else-if="list?.items.length" :users="list.items" :busy="saving" @edit="edit" @status="confirmStatus" />
-      <div v-else class="empty-state"><h3>{{ params.q || params.role || params.status ? 'Tidak ada pengguna yang cocok' : 'Belum ada pengguna' }}</h3><p>{{ params.q || params.role || params.status ? 'Coba kata kunci lain atau atur ulang filter Anda.' : 'Tambahkan akun mahasiswa atau dosen untuk memulai.' }}</p><button v-if="!params.q && !params.role && !params.status" class="button primary" @click="edit(null)">Tambah pengguna</button></div>
-      <div class="pagination"><span>{{ list?.total ? `Halaman ${page} dari ${pages}` : 'Tidak ada hasil' }}</span><div><button class="button pager" :disabled="page <= 1 || listStatus === 'pending'" aria-label="Halaman sebelumnya" @click="page--">Sebelumnya</button><button class="button pager" :disabled="page >= pages || listStatus === 'pending'" aria-label="Halaman berikutnya" @click="page++">Berikutnya</button></div></div>
+  <section aria-labelledby="users-heading">
+    <div class="page-heading">
+      <div>
+        <h1 id="users-heading">Manajemen pengguna</h1>
+        <p>Kelola akun, identitas akademik, dan akses pengguna.</p>
+      </div>
     </div>
-    <UserEditor v-if="editorOpen" :user="selected" :busy="saving" :error="mutationError" @save="save" @reset="resetPassword" @close="editorOpen = false" />
-    <dialog v-if="statusTarget" ref="confirmDialog" class="confirm-dialog" aria-labelledby="status-title" @cancel.prevent="cancelStatus"><h2 id="status-title">{{ statusTarget.is_active ? 'Nonaktifkan akun?' : 'Aktifkan akun?' }}</h2><p>{{ statusTarget.full_name }} {{ statusTarget.is_active ? 'akan kehilangan akses ke sistem. Data dan riwayatnya tetap tersimpan.' : 'akan dapat masuk kembali menggunakan akun yang sama.' }}</p><p v-if="mutationError" class="notice error" role="alert">{{ mutationError }}</p><div><button class="button secondary" :disabled="saving" @click="cancelStatus">Batal</button><button class="button" :class="statusTarget.is_active ? 'danger' : 'primary'" :disabled="saving" @click="changeStatus">{{ saving ? 'Menyimpan…' : statusTarget.is_active ? 'Nonaktifkan akun' : 'Aktifkan akun' }}</button></div></dialog>
+
+    <p v-if="statsError" class="notice error" role="alert">
+      Ringkasan belum dapat dimuat. <button type="button" class="button secondary btn-retry" @click="users.stats.refresh()">Coba lagi</button>
+    </p>
+
+    <div class="panel statistics-panel" aria-label="Ringkasan pengguna">
+      <div class="statistics">
+        <div class="stat-item">
+          <span>Total pengguna</span>
+          <strong>{{ stats?.total ?? '—' }}</strong>
+        </div>
+        <div class="stat-item">
+          <span>Mahasiswa</span>
+          <strong>{{ stats?.students ?? '—' }}</strong>
+        </div>
+        <div class="stat-item">
+          <span>Dosen</span>
+          <strong>{{ stats?.lecturers ?? '—' }}</strong>
+        </div>
+        <div class="stat-item">
+          <span>Akun aktif</span>
+          <strong>{{ stats?.active ?? '—' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <p v-if="message" class="notice success feedback" role="status">{{ message }}</p>
+    <p v-if="mutationError && !activeForm && !statusTarget" class="notice error feedback" role="alert">{{ mutationError }}</p>
+
+    <div class="panel users-panel">
+      <div class="section-heading">
+        <div class="heading-title">
+          <h2>Daftar pengguna</h2>
+          <span>{{ list?.total ?? '—' }} pengguna</span>
+        </div>
+        <div v-if="params.role" class="heading-actions">
+          <template v-if="params.role === 'MAHASISWA'">
+            <button class="button primary" type="button" @click="openCreate('MAHASISWA')">
+              <span aria-hidden="true" class="plus">+</span> Tambah Mahasiswa
+            </button>
+            <button class="button secondary" type="button" @click="importModalOpen = true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Import
+            </button>
+            <button
+              class="button secondary"
+              type="button"
+              :disabled="!list?.items.length"
+              :title="!list?.items.length ? 'Belum ada data mahasiswa untuk diekspor' : 'Ekspor data mahasiswa ke Excel (.xlsx)'"
+              @click="handleExportStudents"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Ekspor
+            </button>
+            <button class="button template" type="button" @click="downloadStudentTemplate">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Unduh Template
+            </button>
+            <button
+              class="button danger"
+              type="button"
+              title="Deaktivasi akun mahasiswa dengan proteksi tanggungan aktif"
+              @click="cohortModalOpen = true"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="18" y1="8" x2="23" y2="13"></line>
+                <line x1="23" y1="8" x2="18" y2="13"></line>
+              </svg>
+              Deaktivasi Akun
+            </button>
+          </template>
+          <template v-else-if="params.role === 'DOSEN'">
+            <button class="button primary" type="button" @click="openCreate('DOSEN')">
+              <span aria-hidden="true" class="plus">+</span> Tambah Dosen
+            </button>
+            <button class="button secondary" type="button" @click="lecturerImportModalOpen = true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Import
+            </button>
+            <button
+              class="button secondary"
+              type="button"
+              :disabled="!list?.items.length"
+              :title="!list?.items.length ? 'Belum ada data dosen untuk diekspor' : 'Ekspor data dosen ke Excel (.xlsx)'"
+              @click="handleExportLecturers"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Ekspor
+            </button>
+            <button class="button template" type="button" @click="downloadLecturerTemplate">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Unduh Template
+            </button>
+          </template>
+          <button v-else-if="params.role === 'ADMIN'" class="button primary" type="button" @click="openCreate('ADMIN')">
+            <span aria-hidden="true" class="plus">+</span> Tambah Admin
+          </button>
+        </div>
+      </div>
+
+      <UserFilters :query="params" @change="users.filters" />
+
+      <div v-if="listStatus === 'pending'" class="empty-state" role="status">
+        <p>Memuat daftar pengguna…</p>
+      </div>
+
+      <div v-else-if="listError" class="empty-state">
+        <h3>Daftar belum dapat dimuat</h3>
+        <p>{{ apiMessage(listError) }}</p>
+        <button class="button secondary" @click="users.refresh">Coba lagi</button>
+      </div>
+
+      <UserTable v-else-if="list?.items.length" :users="list.items" :role="params.role" :busy="saving" @edit="edit" @status="confirmStatus" />
+
+      <div v-else class="empty-state">
+        <h3>{{ params.q || params.status || params.admission_year ? 'Tidak ada pengguna yang cocok' : 'Belum ada pengguna' }}</h3>
+        <p>{{ params.q || params.status || params.admission_year ? 'Coba kata kunci lain atau atur ulang filter Anda.' : 'Data pengguna untuk peran ini belum tersedia dalam sistem.' }}</p>
+      </div>
+
+      <div class="pagination">
+        <span>{{ list?.total ? `Halaman ${page} dari ${pages}` : 'Tidak ada hasil' }}</span>
+        <div>
+          <button class="button pager" :disabled="page <= 1 || listStatus === 'pending'" aria-label="Halaman sebelumnya" @click="page--">
+            Sebelumnya
+          </button>
+          <button class="button pager" :disabled="page >= pages || listStatus === 'pending'" aria-label="Halaman berikutnya" @click="page++">
+            Berikutnya
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulir Terpisah Berdasarkan Peran -->
+    <StudentForm
+      v-if="activeForm === 'MAHASISWA'"
+      :user="selected"
+      :busy="saving"
+      :error="mutationError"
+      @save="save"
+      @reset="resetPassword"
+      @close="closeForm"
+    />
+    <LecturerForm
+      v-else-if="activeForm === 'DOSEN'"
+      :user="selected"
+      :busy="saving"
+      :error="mutationError"
+      @save="save"
+      @reset="resetPassword"
+      @close="closeForm"
+    />
+    <AdminForm
+      v-else-if="activeForm === 'ADMIN'"
+      :user="selected"
+      :busy="saving"
+      :error="mutationError"
+      @save="save"
+      @reset="resetPassword"
+      @close="closeForm"
+    />
+
+    <StudentImportModal
+      v-if="importModalOpen"
+      @close="importModalOpen = false"
+      @imported="users.refresh"
+    />
+
+    <LecturerImportModal
+      v-if="lecturerImportModalOpen"
+      @close="lecturerImportModalOpen = false"
+      @imported="users.refresh"
+    />
+
+    <CohortDeactivateModal
+      :open="cohortModalOpen"
+      :initial-year="params.admission_year ? Number(params.admission_year) : undefined"
+      @close="cohortModalOpen = false"
+      @success="handleCohortSuccess"
+    />
+
+    <dialog v-if="statusTarget" ref="confirmDialog" class="confirm-dialog" aria-labelledby="status-title" @cancel.prevent="cancelStatus">
+      <h2 id="status-title">{{ statusTarget.is_active ? 'Nonaktifkan akun?' : 'Aktifkan akun?' }}</h2>
+      <p>{{ statusTarget.full_name }} {{ statusTarget.is_active ? 'akan kehilangan akses ke sistem. Data dan riwayatnya tetap tersimpan.' : 'akan dapat masuk kembali menggunakan akun yang sama.' }}</p>
+      <p v-if="mutationError" class="notice error" role="alert">{{ mutationError }}</p>
+      <div>
+        <button class="button secondary" :disabled="saving" @click="cancelStatus">Batal</button>
+        <button class="button" :class="statusTarget.is_active ? 'danger' : 'primary'" :disabled="saving" @click="changeStatus">
+          {{ saving ? 'Menyimpan…' : statusTarget.is_active ? 'Nonaktifkan akun' : 'Aktifkan akun' }}
+        </button>
+      </div>
+    </dialog>
   </section>
 </template>
 
 <style scoped>
 .plus { font-size: 1.25rem; font-weight: 400; line-height: 1; }
-.statistics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); margin: 2.5rem 0 2rem; }
-.statistics > div { padding-left: 2rem; border-left: 1px solid #dedfda; }
-.statistics > div:first-child { padding-left: 0; border: 0; }
-.statistics > div > span { font-size: .9375rem; color: var(--muted); }
-.statistics strong { display: flex; gap: .75rem; align-items: center; margin-top: .5rem; font-size: 2.25rem; letter-spacing: -.04em; font-weight: 500; line-height: 1.15; }
+.statistics-panel {
+  padding: 1.75rem 2rem;
+  margin-bottom: 2rem;
+}
+.statistics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.stat-item {
+  padding-left: 2rem;
+  border-left: 1px solid var(--line);
+}
+.stat-item:first-child {
+  padding-left: 0;
+  border: 0;
+}
+.stat-item > span {
+  font-size: .9375rem;
+  color: var(--muted);
+}
+.stat-item strong {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  margin-top: .5rem;
+  font-size: 2.25rem;
+  letter-spacing: -.04em;
+  font-weight: 500;
+  line-height: 1.15;
+}
 .feedback { margin-bottom: 1.25rem; }
+.btn-retry { min-height: 32px; padding: .25rem .75rem; font-size: .875rem; margin-left: .5rem; }
 .users-panel { min-width: 0; container: users / inline-size; }
-.section-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 1.5rem 1.5rem .5rem; }
-.section-heading h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; }
-.section-heading > span { color: var(--muted); font-size: .875rem; }
-.pagination { padding: 1rem 1.5rem; border-top: 1px solid var(--line); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: center; font-size: .875rem; color: var(--muted); }
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+  flex-wrap: wrap;
+}
+.heading-title {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+}
+.heading-title h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+.heading-title > span {
+  color: var(--muted);
+  font-size: .875rem;
+}
+.heading-actions {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  flex-wrap: wrap;
+}
+.pagination {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  font-size: .875rem;
+  color: var(--muted);
+}
 .pagination > div { display: flex; gap: .5rem; }
-.pager { font-size: .875rem; background: white; border-color: #85858d; padding: .5rem .75rem; }
-.pager:disabled { background: #f5f5f3; border-color: #dededb; cursor: default; }
-.confirm-dialog { width: min(460px,calc(100% - 2rem)); padding: 2rem; border: none; border-radius: 20px; color: var(--ink); box-shadow: 0 20px 80px #15131f30; }
-.confirm-dialog::backdrop { background: #1c1a2755; }
+.pager { font-size: .875rem; background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 10px; padding: .5rem .85rem; transition: all 150ms ease; }
+.pager:not(:disabled):hover { border-color: var(--border-hover); background: var(--panel-hover); }
+.pager:disabled { background: var(--canvas); border-color: var(--line); color: var(--muted); cursor: default; opacity: .45; }
+.confirm-dialog {
+  width: min(460px, calc(100% - 2rem));
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.confirm-dialog::backdrop { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); }
 .confirm-dialog h2 { font-size: 1.5rem; font-weight: 550; letter-spacing: -.02em; }
 .confirm-dialog p { margin-top: 1rem; font-size: 1rem; line-height: 1.65; color: var(--muted); }
 .confirm-dialog > div { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
-@media(min-width:768px) and (max-width:1199px) { .statistics > div { padding-left: 1rem; } .page-heading { flex-direction: column; align-items: flex-start; } }
-@media(max-width:767px) { .statistics { grid-template-columns: 1fr 1fr; gap: 1.5rem 1rem; margin-block: 1.5rem; } .statistics > div { padding-left: 1rem; } .statistics > div:nth-child(3) { padding-left: 0; border: 0; } .statistics strong { font-size: 2rem; } .section-heading { padding: 1.25rem 1rem .5rem; } .pagination { padding: 1rem; } }
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .statistics-panel { padding: 1.5rem 1.5rem; }
+  .stat-item { padding-left: 1.25rem; }
+  .page-heading { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 767px) {
+  .statistics-panel { padding: 1.25rem; margin-bottom: 1.5rem; }
+  .statistics {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 1rem;
+  }
+  .stat-item { padding-left: 1rem; }
+  .stat-item:nth-child(odd) { padding-left: 0; border: 0; }
+  .stat-item strong { font-size: 1.875rem; }
+  .section-heading { padding: 1.25rem 1rem .75rem; }
+  .heading-actions { width: 100%; }
+  .pagination { padding: 1rem; }
+}
 </style>

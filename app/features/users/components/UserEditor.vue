@@ -41,7 +41,7 @@ function save() {
 .editor-dialog::backdrop { background: #1c1a2755; }
 .dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 1.75rem 2rem 1rem; }
 .dialog-header h2 { font-size: 1.75rem; font-weight: 600; letter-spacing: -.03em; }
-.close-button { border: 0; background: #f1f1ef; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 50%; font-size: 1.5rem; color: var(--muted); }
+.close-button { border: 0; background: transparent; width: 36px; height: 36px; flex: 0 0 36px; font-size: 1.5rem; color: var(--muted); cursor: pointer; }
 .dialog-body { padding: 0 2rem 1.5rem; }
 .dialog-intro { color: var(--muted); font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -49,6 +49,6 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .password-row { display: flex; gap: .5rem; }
 .password-row .text-button { padding-inline: .25rem; }
 .dialog-body .notice { margin-top: 1rem; }
-.dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; border-top: 1px solid var(--line); padding: 1.25rem 2rem; background: #fafaf8; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; border-top: 1px solid var(--line); padding: 1.25rem 2rem; background: var(--canvas); }
 @media(max-width:767px) { .dialog-header { padding: 1.25rem; } .dialog-body { padding: 0 1.25rem 1.25rem; } .dialog-actions { padding: 1.25rem; position: sticky; bottom: 0; } }
 </style>

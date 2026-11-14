@@ -33,7 +33,7 @@ async function submit(email: string, password: string) {
 </template>
 
 <style scoped>
-.login-page { display: grid; grid-template-columns: 7fr 3fr; min-height: 100dvh; background: white; }
+.login-page { display: grid; grid-template-columns: 7fr 3fr; min-height: 100dvh; background: var(--canvas); color: var(--ink); }
 .story-panel { position: relative; display: flex; flex-direction: column; background: var(--sage); padding: 2.5rem 3.25rem; color: #263f33; min-width: 0; }
 .wordmark { font-size: 2rem; font-weight: 650; letter-spacing: -.07em; }
 .story-art { width: 92%; margin: 1rem auto 0; flex: 1; display: flex; align-items: center; justify-content: center; }

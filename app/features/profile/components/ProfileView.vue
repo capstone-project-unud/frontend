@@ -37,7 +37,7 @@ async function logout() { try { await auth.logout() } catch (e) { error.value = 
 .profile-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: start; max-width: 1100px; }
 .profile-panel,.password-panel { padding: 2rem; }
 .profile-identity { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
-.profile-avatar { display: grid; place-items: center; width: 54px; height: 54px; background: #e7e0f5; color: #64419d; border-radius: 50%; font-weight: 600; }
+.profile-avatar { display: grid; place-items: center; width: 54px; height: 54px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); border-radius: 50%; font-weight: 600; }
 h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; }
 .profile-identity p { color: var(--muted); font-size: .9375rem; margin-top: .375rem; }
 .password-panel > p { color: var(--muted); font-size: 1rem; line-height: 1.65; margin: .75rem 0 1.5rem; }
