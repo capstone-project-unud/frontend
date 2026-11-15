@@ -6,6 +6,7 @@
     "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   },
   "scripts": {
+    "test": "node --experimental-strip-types --test tests/calendar.test.ts",
     "dev": "nuxt dev --host localhost",
     "build": "nuxt build",
     "preview": "nuxt preview",
