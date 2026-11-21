@@ -1,29 +1,41 @@
 <script setup lang="ts">
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
-import type { Proposal, Project } from '../types'
+import type { Proposal, Project, Interest } from '../types'
+import type { ProposalExam } from '../proposal'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
-import { dateTime } from '~/utils/format'
 import ProposalForm from './ProposalForm.vue'
-import StatusLabel from './StatusLabel.vue'
+import ProposalDocumentReview from './ProposalDocumentReview.vue'
 const api = useCapstone()
-const { student, busy, error, message } = api
+const { student, busy, error } = api
 const fetcher = useRequestFetch()
-const { data, status, error: loadError, refresh } = await useAsyncData('proposal-applications', () => fetcher<{ items: Proposal[] }>(capstoneAPI + '/proposals'))
-const { data: projects } = await useAsyncData('proposal-projects', () => fetcher<{ items: Project[] }>(capstoneAPI + '/projects', { query: { status: 'FINALIZED' } }))
-const notes = reactive<Record<string, string>>({})
-const kinds = [{ id: 'simak', title: 'Screenshot SIMAK berstatus diterima' }, { id: 'approval', title: 'Surat persetujuan pembimbing' }] as const
-const filter = shallowRef('')
-const statusOptions = [{ value: '', label: 'Semua pendaftaran' }, { value: 'pending', label: 'Belum lengkap' }, { value: 'ready', label: 'Kedua berkas valid' }]
-const items = computed(() => data.value?.items.filter(a => !filter.value || (filter.value === 'ready' ? a.ready : !a.ready)) || [])
-async function review(a: Proposal, kind: 'simak' | 'approval', decision: 'VALID' | 'REVISION') { if (await api.mutate('/proposals/' + a.id + '/review', { version: a.version, kind, status: decision, note: notes[a.id + kind] || '' }, 'PUT')) await refresh() }
+const interest = shallowRef('')
+const validity = shallowRef('')
+const query = computed(() => ({ interest_id: interest.value, validity: validity.value }))
+const { data, status, error: loadError, refresh } = await useAsyncData('proposal-applications', () => fetcher<{ items: Proposal[] }>(capstoneAPI + '/proposals', { query: query.value }), { watch: [query] })
+const { data: projects, error: projectError, refresh: refreshProjects } = await useAsyncData('proposal-projects', () => student.value ? fetcher<{ items: Project[] }>(capstoneAPI + '/projects', { query: { status: 'FINALIZED' } }) : Promise.resolve({ items: [] }))
+const { data: exams } = await useAsyncData('proposal-registration-exams', () => student.value ? fetcher<{ items: ProposalExam[] }>(capstoneAPI + '/proposal-exams') : Promise.resolve({ items: [] }))
+const { data: interests } = await useAsyncData('proposal-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
+const selectedId = shallowRef('')
+const selected = computed(() => data.value?.items.find(a => a.id === selectedId.value) || (student.value ? data.value?.items[0] : undefined))
+const own = computed(() => data.value?.items[0])
+const locked = computed(() => exams.value?.items.some(e => e.application_id === own.value?.id))
+const interestOptions = computed(() => [{ value: '', label: 'Semua bidang minat' }, ...(interests.value?.items.map(i => ({ value: i.id, label: i.name })) || [])])
+const validityOptions = [{ value: '', label: 'Semua status' }, { value: 'pending', label: 'Belum lengkap valid' }, { value: 'revision', label: 'Perlu perbaikan' }, { value: 'ready', label: 'Enam berkas valid' }]
+function exportData() { api.download('/proposals/export?' + new URLSearchParams(query.value), 'pendaftaran-proposal.xlsx') }
 </script>
 <template>
- <section><header class="page-heading"><div><h1>{{ student ? 'Persyaratan ujian proposal' : 'Verifikasi berkas UP' }}</h1><p>{{ student ? 'Pantau pemeriksaan kedua berkas oleh tata usaha.' : 'Periksa bukti SIMAK dan surat persetujuan pembimbing secara terpisah.' }}</p></div></header>
- <ProposalForm v-if="student && projects?.items.length" :key="data?.items[0]?.version || 0" :projects="projects.items" :application="data?.items[0]" @saved="refresh()" /><p v-else-if="student" class="notice">Judul perlu ditetapkan dan dua pembimbing perlu ditugaskan sebelum mendaftar UP.</p>
- <div class="panel workspace-panel"><div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Daftar pemeriksaan</h2><span>{{ items.length }} pendaftaran</span></div></div><div v-if="!student" class="workspace-toolbar"><WorkspaceFilter id="proposal-filter" v-model="filter" label="Status pemeriksaan" :options="statusOptions" /></div></div>
- <p v-if="error" class="notice error cap-feedback" role="alert">{{ error }}</p><p v-if="message" class="notice success cap-feedback" role="status">{{ message }}</p><p v-if="status === 'pending'" role="status" class="cap-loading">Memuat pendaftaran…</p><div v-else-if="loadError" class="notice error" role="alert">Pendaftaran belum dapat dimuat. <button class="button secondary" @click="refresh()">Coba lagi</button></div><div v-else-if="!items.length" class="panel empty-state"><h2>Belum ada pendaftaran yang ditampilkan</h2><p>Kedua berkas akan muncul setelah mahasiswa mengajukan verifikasi.</p></div>
- <div v-else class="cap-stack"><article v-for="a in items" :key="a.id" class="panel cap-section"><div class="cap-section-heading"><div><h2>{{ a.student_name }} · {{ a.nim }}</h2><p class="muted">{{ a.title }}</p></div><strong :class="{ 'cap-success': a.ready }">{{ a.ready ? 'Kedua berkas valid' : 'Menunggu kelengkapan' }}</strong></div>
- <section v-for="kind in kinds" :key="kind.id" class="member-row"><div class="cap-section-heading"><h3>{{ kind.title }}</h3><StatusLabel :value="a[kind.id === 'simak' ? 'simak_status' : 'approval_status']" /></div><div><a class="button secondary" :href="capstoneAPI + '/files/' + a[kind.id === 'simak' ? 'simak_file_id' : 'approval_file_id']">Unduh berkas untuk diperiksa</a></div><p v-if="a[kind.id === 'simak' ? 'simak_note' : 'approval_note']" class="notice">{{ a[kind.id === 'simak' ? 'simak_note' : 'approval_note'] }}</p><small v-if="a[kind.id === 'simak' ? 'simak_reviewed_at' : 'approval_reviewed_at']" class="muted">Diperiksa {{ dateTime(a[kind.id === 'simak' ? 'simak_reviewed_at' : 'approval_reviewed_at']!) }}</small>
- <form v-if="api.user.value?.roles.includes('TU')" class="cap-review" @submit.prevent="review(a, kind.id, 'VALID')"><div class="field"><label :for="'proposal-note-' + a.id + kind.id">Catatan pemeriksaan (wajib untuk revisi)</label><textarea :id="'proposal-note-' + a.id + kind.id" v-model="notes[a.id + kind.id]" maxlength="2000" rows="2" /></div><div class="cap-actions"><button class="button primary" :disabled="busy">Validasi berkas</button><button type="button" class="button secondary" :disabled="busy" @click="review(a, kind.id, 'REVISION')">Minta perbaikan</button></div></form></section>
- <p v-if="a.ready" class="notice success">Persyaratan berkas UP telah divalidasi TU. Penjadwalan ujian mengikuti proses program studi.</p></article></div></section>
+ <section>
+  <p v-if="student && projectError" class="notice error" role="alert">Judul belum dapat dimuat. <button class="button secondary" @click="refreshProjects()">Coba lagi</button></p>
+  <ProposalForm v-if="student && projects?.items.length && status === 'success'" :key="own?.version || 0" :projects="projects.items" :application="own" :locked="locked" @saved="refresh()" />
+  <div class="panel workspace-panel cap-list-panel">
+   <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Daftar pendaftaran proposal</h2><span>{{ data?.items.length ?? '—' }} pendaftaran</span></div><button v-if="!student" class="button secondary" :disabled="busy || !!loadError" @click="exportData">Unduh Excel</button></div>
+   <div v-if="!student" class="workspace-toolbar"><WorkspaceFilter id="proposal-interest" v-model="interest" label="Bidang minat" :options="interestOptions" /><WorkspaceFilter id="proposal-validity" v-model="validity" label="Kevalidan persyaratan" :options="validityOptions" /></div>
+   <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
+   <p v-if="status === 'pending'" class="cap-loading" role="status">Memuat pendaftaran…</p>
+   <div v-else-if="loadError" class="empty-state"><h2>Pendaftaran belum dapat dimuat</h2><button class="button secondary" @click="refresh()">Coba lagi</button></div>
+   <div v-else-if="!data?.items.length" class="empty-state"><h2>Belum ada pendaftaran</h2><p>{{ student ? 'Daftarkan proposal setelah judul dan dua pembimbing ditetapkan.' : 'Sesuaikan filter atau tunggu pengajuan mahasiswa.' }}</p></div>
+   <div v-else class="cap-table-wrap"><table class="workspace-table"><caption class="sr-only">Pendaftaran proposal dan validasi enam persyaratan</caption><thead><tr><th>NIM / Nama</th><th>Judul / Bidang minat</th><th>P1</th><th>P2</th><th>Berkas valid</th><th><span class="sr-only">Tindakan</span></th></tr></thead><tbody><tr v-for="a in data.items" :key="a.id"><td>{{ a.nim }}<br>{{ a.student_name }}</td><td>{{ a.title }}<br><span class="muted">{{ a.interest_name }}</span></td><td>{{ a.supervisor_1_name || 'Belum ditetapkan' }}</td><td>{{ a.supervisor_2_name || 'Belum ditetapkan' }}</td><td>{{ a.documents.filter(d => d.status === 'VALID').length }} / 6</td><td><button class="button secondary" :aria-expanded="selected?.id === a.id" @click="selectedId = selectedId === a.id ? '' : a.id">{{ student ? 'Lihat status' : 'Periksa' }}</button></td></tr></tbody></table></div>
+   <ProposalDocumentReview v-if="selected" :key="selected.id + ':' + selected.version" :application="selected" @saved="refresh()" />
+  </div>
+ </section>
 </template>

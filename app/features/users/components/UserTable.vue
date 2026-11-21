@@ -88,7 +88,7 @@ const isLecturerView = computed(() => props.role === 'DOSEN')
               v-for="role in user.roles"
               :key="role"
               class="role"
-              :class="{ koprodi: role === 'KOPRODI' }"
+              :class="{ coordinator: role === 'KOORDINATOR_TA' }"
             >
               {{ roleLabels[role] }}
             </span>
@@ -239,7 +239,7 @@ const isLecturerView = computed(() => props.role === 'DOSEN')
   border: 1px solid var(--border);
 }
 
-.role.koprodi {
+.role.coordinator {
   border-color: var(--accent);
   color: var(--accent);
 }

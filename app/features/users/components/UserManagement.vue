@@ -19,7 +19,7 @@ const { data: list, status: listStatus, error: listError } = users.list
 const { data: stats, error: statsError } = users.stats
 const { message, mutationError, saving, page, params } = users
 
-type AccountForm = 'MAHASISWA' | 'DOSEN' | 'ADMIN' | 'KOORDINATOR_TA' | 'TU'
+type AccountForm = 'MAHASISWA' | 'DOSEN' | 'ADMIN' | 'KOORDINATOR_TA' | 'TU' | 'KOPRODI'
 const activeForm = shallowRef<AccountForm | null>(null)
 const importModalOpen = shallowRef(false)
 const lecturerImportModalOpen = shallowRef(false)
@@ -48,7 +48,7 @@ function edit(user: User | null) {
     return
   }
   if (user.roles.includes('ADMIN')) activeForm.value = 'ADMIN'
-  else if (user.roles.includes('DOSEN') || user.roles.includes('KOPRODI')) activeForm.value = 'DOSEN'
+  else if (user.roles.includes('DOSEN')) activeForm.value = 'DOSEN'
   else if (user.roles.includes('KOORDINATOR_TA')) activeForm.value = 'KOORDINATOR_TA'
   else if (user.roles.includes('TU')) activeForm.value = 'TU'
   else activeForm.value = 'MAHASISWA'
@@ -59,22 +59,63 @@ function closeForm() {
   selected.value = null
 }
 
-function handleExportStudents() {
-  const students = (list.value?.items || []).filter(u => u.roles.includes('MAHASISWA'))
-  if (!students.length) {
-    message.value = 'Tidak ada data mahasiswa untuk diekspor.'
-    return
+const exporting = shallowRef(false)
+
+async function fetchFilteredUsers(expectedRole: 'MAHASISWA' | 'DOSEN') {
+  const collected: User[] = []
+  let currentPage = 1
+  while (true) {
+    const res = await $fetch<{ items: User[]; total: number }>('/api/v1/users', {
+      query: {
+        q: params.value.q,
+        role: expectedRole,
+        status: params.value.status,
+        admission_year: expectedRole === 'MAHASISWA' ? params.value.admission_year : '',
+        page: currentPage,
+        limit: 500,
+      },
+    })
+    collected.push(...res.items)
+    if (collected.length >= res.total || res.items.length === 0) break
+    currentPage++
   }
-  exportStudentsToCsv(students)
+  return collected
 }
 
-function handleExportLecturers() {
-  const lecturers = (list.value?.items || []).filter(u => u.roles.includes('DOSEN'))
-  if (!lecturers.length) {
-    message.value = 'Tidak ada data dosen untuk diekspor.'
-    return
+async function handleExportStudents() {
+  if (exporting.value) return
+  exporting.value = true
+  mutationError.value = ''
+  try {
+    const students = await fetchFilteredUsers('MAHASISWA')
+    if (!students.length) {
+      message.value = 'Tidak ada data mahasiswa untuk diekspor.'
+      return
+    }
+    exportStudentsToCsv(students)
+  } catch (e) {
+    mutationError.value = apiMessage(e)
+  } finally {
+    exporting.value = false
   }
-  exportLecturersToExcel(lecturers)
+}
+
+async function handleExportLecturers() {
+  if (exporting.value) return
+  exporting.value = true
+  mutationError.value = ''
+  try {
+    const lecturers = await fetchFilteredUsers('DOSEN')
+    if (!lecturers.length) {
+      message.value = 'Tidak ada data dosen untuk diekspor.'
+      return
+    }
+    exportLecturersToExcel(lecturers)
+  } catch (e) {
+    mutationError.value = apiMessage(e)
+  } finally {
+    exporting.value = false
+  }
 }
 
 async function save(input: UserInput) {
@@ -108,13 +149,7 @@ async function changeStatus() {
 </script>
 
 <template>
-  <section aria-labelledby="users-heading">
-    <div class="page-heading">
-      <div>
-        <h1 id="users-heading">Manajemen pengguna</h1>
-        <p>Kelola akun, identitas akademik, dan akses pengguna.</p>
-      </div>
-    </div>
+  <section aria-labelledby="workspace-page-title">
 
     <p v-if="statsError" class="notice error" role="alert">
       Ringkasan belum dapat dimuat. <button type="button" class="button secondary btn-retry" @click="users.stats.refresh()">Coba lagi</button>
@@ -154,7 +189,7 @@ async function changeStatus() {
             <button
               class="button secondary"
               type="button"
-              :disabled="!list?.items.length"
+              :disabled="exporting || !list?.items.length"
               :title="!list?.items.length ? 'Belum ada data mahasiswa untuk diekspor' : 'Ekspor data mahasiswa ke Excel (.xlsx)'"
               @click="handleExportStudents"
             >
@@ -203,7 +238,7 @@ async function changeStatus() {
             <button
               class="button secondary"
               type="button"
-              :disabled="!list?.items.length"
+              :disabled="exporting || !list?.items.length"
               :title="!list?.items.length ? 'Belum ada data dosen untuk diekspor' : 'Ekspor data dosen ke Excel (.xlsx)'"
               @click="handleExportLecturers"
             >
@@ -223,8 +258,8 @@ async function changeStatus() {
               Unduh Template
             </button>
           </template>
-          <button v-else-if="params.role === 'ADMIN' || params.role === 'KOORDINATOR_TA' || params.role === 'TU'" class="button primary" type="button" @click="openCreate(params.role)">
-            <span aria-hidden="true" class="plus">+</span> Tambah {{ params.role === 'TU' ? 'Tata usaha' : params.role === 'KOORDINATOR_TA' ? 'Koordinator TA' : 'Admin' }}
+          <button v-else-if="params.role === 'KOPRODI' || params.role === 'ADMIN' || params.role === 'KOORDINATOR_TA' || params.role === 'TU'" class="button primary" type="button" @click="openCreate(params.role)">
+            <span aria-hidden="true" class="plus">+</span> Tambah {{ params.role === 'KOPRODI' ? 'Koprodi' : params.role === 'TU' ? 'Tata usaha' : params.role === 'KOORDINATOR_TA' ? 'Koordinator Capstone' : 'Admin' }}
           </button>
         </div>
       </div>
@@ -272,7 +307,7 @@ async function changeStatus() {
       @close="closeForm"
     />
     <LecturerForm
-      v-else-if="activeForm === 'DOSEN'"
+      v-else-if="activeForm === 'DOSEN' || activeForm === 'KOPRODI'" :initial-koprodi="activeForm === 'KOPRODI'"
       :user="selected"
       :busy="saving"
       :error="mutationError"

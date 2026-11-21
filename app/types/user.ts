@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'MAHASISWA' | 'DOSEN' | 'KOPRODI' | 'KOORDINATOR_TA' | 'TU'
+export type Role = 'ADMIN' | 'MAHASISWA' | 'DOSEN' | 'KOORDINATOR_TA' | 'TU' | 'KOPRODI'
 export interface User {
   id: string
   full_name: string
@@ -30,4 +30,16 @@ export interface UserInput {
   is_active?: boolean
 }
 export interface UserList { items: User[]; total: number; page: number; limit: number }
-export interface UserStats { total: number; active: number; students: number; lecturers: number }
+export interface CohortStat { year: number; total: number; active: number }
+export interface UserStats {
+  total: number
+  active: number
+  inactive?: number
+  students: number
+  lecturers: number
+  lecturers_only?: number
+  coordinators?: number
+  tu?: number
+  admins?: number
+  cohorts?: CohortStat[]
+}

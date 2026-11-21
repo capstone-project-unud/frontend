@@ -7,7 +7,7 @@ export function useCapstone() {
  const roles = computed(() => auth.user.value?.roles || [])
  const student = computed(() => roles.value.includes('MAHASISWA'))
  const coordinator = computed(() => roles.value.includes('KOORDINATOR_TA'))
- const staff = computed(() => roles.value.some(r => ['ADMIN', 'DOSEN', 'KOORDINATOR_TA', 'TU'].includes(r)))
+ const staff = computed(() => roles.value.some(r => ['ADMIN', 'DOSEN', 'KOORDINATOR_TA', 'TU', 'KOPRODI'].includes(r)))
  const busy = shallowRef(false)
  const error = shallowRef('')
  const message = shallowRef('')

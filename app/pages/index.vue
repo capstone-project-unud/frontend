@@ -1,5 +1,9 @@
 <script setup lang="ts">
-definePageMeta({ middleware: ['auth'] })
-await navigateTo('/dashboard', { replace: true })
+import PublicLandingView from '~/features/showcase/components/PublicLandingView.vue'
+
+useHead({ title: 'Pameran Karya Capstone · PSTI Universitas Udayana' })
 </script>
-<template><span /></template>
+
+<template>
+  <PublicLandingView />
+</template>

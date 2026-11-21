@@ -2,11 +2,11 @@
 import type { Role, User, UserInput } from '~/types/user'
 import UserPasswordReset from './UserPasswordReset.vue'
 
-const props = defineProps<{ user: User | null; busy: boolean; error: string }>()
+const props = defineProps<{ user: User | null; busy: boolean; error: string; initialKoprodi?: boolean }>()
 const emit = defineEmits<{ save: [input: UserInput]; reset: [password: string]; close: [] }>()
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 
-const koprodi = shallowRef(props.user?.roles.includes('KOPRODI') || false)
+const koprodi = shallowRef(props.user?.roles.includes('KOPRODI') || props.initialKoprodi || false)
 const coordinator = shallowRef(props.user?.roles.includes('KOORDINATOR_TA') || false)
 const form = reactive({
   full_name: props.user?.full_name || '',
@@ -29,8 +29,8 @@ function close() {
 
 function save() {
   const roles: Role[] = ['DOSEN']
-  if (koprodi.value) roles.push('KOPRODI')
   if (coordinator.value) roles.push('KOORDINATOR_TA')
+  if (koprodi.value) roles.push('KOPRODI')
 
   emit('save', {
     full_name: form.full_name,
@@ -89,14 +89,13 @@ function save() {
               <input id="lecturer-nidn" v-model="form.nidn" maxlength="30" placeholder="Nomor induk dosen">
             </div>
 
-            <label class="check-card full">
-              <input v-model="koprodi" type="checkbox" class="modern-checkbox">
+            <label class="check-card full"><input v-model="koprodi" type="checkbox" class="modern-checkbox"><div class="check-text"><strong>Tetapkan peran Koprodi</strong><span>Akses pemantauan program studi. Penetapan judul tetap menjadi kewenangan koordinator.</span></div></label><label class="check-card full">
+              <input v-model="coordinator" type="checkbox" class="modern-checkbox">
               <div class="check-text">
-                <strong>Tetapkan peran Koordinator Program Studi (Koprodi)</strong>
-                  <span>Jabatan Koprodi terpisah dari kewenangan koordinator TA.</span>
+                <strong>Tetapkan peran Koordinator Capstone</strong>
+                <span>Dapat memvalidasi judul, menetapkan pembimbing per mahasiswa, dan memfinalisasi judul. Akun ditampilkan di tab Koordinator Capstone selama peran ini aktif.</span>
               </div>
             </label>
-              <label class="check-card full"><input v-model="coordinator" type="checkbox" class="modern-checkbox"><div class="check-text"><strong>Tetapkan peran Koordinator TA/Capstone</strong><span>Dapat memvalidasi judul, menetapkan pembimbing per mahasiswa, dan memfinalisasi judul.</span></div></label>
 
             <div class="field full">
               <label for="lecturer-phone">Nomor telepon <span class="optional">(opsional)</span></label>

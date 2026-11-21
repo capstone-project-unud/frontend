@@ -16,8 +16,8 @@ export function useAuth() {
     initialized.value = true
     return user.value
   }
-  async function login(email: string, password: string) {
-    await $fetch('/api/v1/auth/login', { method: 'POST', body: { email, password } })
+  async function login(identifier: string, password: string) {
+    await $fetch('/api/v1/auth/login', { method: 'POST', body: { identifier, password } })
     await load()
     if (!user.value) throw new Error('Sesi belum tersedia. Silakan masuk kembali.')
   }

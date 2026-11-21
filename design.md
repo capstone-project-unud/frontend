@@ -22,7 +22,7 @@ Urbanist variable 100–900, disimpan lokal dengan lisensi OFL. Bentuk geometris
 | Peran | Ukuran / tinggi baris | Berat | Tracking |
 | --- | --- | --- | --- |
 | Judul ilustrasi login | 40–64 px desktop, 32 px ponsel / 1.05 | 500 | -0.045em |
-| Judul halaman | clamp(30, 3vw, 40) px / 1.2 | 600 | -0.035em |
+| Judul header workspace | clamp(18px, 1.9cqi, 26px) / 1.15 | 600 | -0.035em |
 | Judul login / dialog | 24–32 px / 1.2 | 600–700 | -0.03em |
 | Judul panel / section | 18 px / 1.5 | 600 | -0.02em |
 | Angka ringkasan | 36 px / 1.15 | 500 | -0.04em |
@@ -34,7 +34,7 @@ Ukuran dasar 16 px. Teks yang terlihat tidak boleh lebih kecil dari 13–14 px, 
 
 ### Mode Terang dan Mode Gelap (White Mode & Dark Mode)
 
-Sistem mengusung arsitektur visual token CSS yang mendukung penuh **Mode Terang (White Mode)** dan **Mode Gelap (Dark Mode)**. Perubahan tema mendeteksi preferensi sistem pengguna (`prefers-color-scheme: dark`) secara otomatis serta menyediakan toggle manual di sidebar yang tersimpan pada `localStorage` (`capstone_theme`).
+Sistem mengusung arsitektur visual token CSS yang mendukung penuh **Mode Terang (White Mode)** dan **Mode Gelap (Dark Mode)**. Perubahan tema mendeteksi preferensi sistem pengguna (`prefers-color-scheme: dark`) secara otomatis serta menyediakan toggle manual di header workspace yang tersimpan pada `localStorage` (`capstone_theme`).
 
 | Peran Token | Variabel CSS | Mode Terang (White Mode) | Mode Gelap (Dark Mode) |
 | --- | --- | --- | --- |
@@ -60,7 +60,7 @@ Prinsip Kontras:
 - Seluruh kombinasi warna teks dan latar belakang wajib memenuhi ambang batas kontras WCAG AA (minimal 4.5:1 untuk teks biasa, 3:1 untuk teks besar/tebal).
 - Transisi perubahan warna antar tema dibatasi pada `150ms ease` dan dimatikan saat preferensi `prefers-reduced-motion` aktif.
 
-Spasi: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px. Label–input 8–10 px, antar field 20–24 px, judul–penjelasan 8–12 px, antarkelompok 24–32 px. Area interaksi minimal 44 × 44 px; input/tombol tinggi 44–48 px, kolom dan tombol login 52 px. Radius tombol/input 12 px, panel/sidebar/card ringkasan 20 px, dialog modal 24 px, badge peran 5–6 px. Bayangan tipis pada sidebar dan card panel; soft deep shadow pada dialog modal (`box-shadow: 0 24px 64px -12px rgba(25, 20, 50, 0.22)`).
+Skala spacing 4–64 px menjadi token dasar, bukan ukuran tetap untuk seluruh viewport. Terapkan dengan `rem` dan `clamp()` sesuai ruang yang tersedia. Area interaksi tidak boleh lebih kecil dari 44 × 44 px demi aksesibilitas sentuh. Radius mengikuti token komponen, bayangan tipis dipakai pada sidebar/panel, dan dialog memakai soft deep shadow (`box-shadow: 0 24px 64px -12px rgba(25, 20, 50, 0.22)`). Hindari lebar/tinggi tetap untuk halaman, header, dan panel utama.
 
 ## Teks dan informasi
 
@@ -77,8 +77,18 @@ Spasi: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px. Label–input 8–10 px, antar f
 
 Manajemen pengguna (`/admin/users`) menjadi acuan visual utama sesuai arahan pemilik. Dashboard, daftar/detail/form judul, finalisasi, bimbingan, proposal, dan bidang minat mengikuti Urbanist, token tema, ukuran panel, tabel, tombol, formulir, dan status halaman ini.
 
-- Judul halaman berisi judul dan satu penjelasan; tindakan utama berada di header panel tempat pekerjaan dilakukan.
-- Header panel memakai padding 24 px, judul 18 px, jumlah hasil 14 px, dan kelompok tombol dengan jarak 10 px. Ponsel menggunakan padding horizontal 16 px dan tombol dapat turun ke baris berikutnya.
+#### Margin, kolom konten, dan header halaman
+
+- `/capstone` menjadi acuan tepi kolom konten workspace. Sidebar dan konten menggunakan grid fluid: lebar sidebar dibatasi dengan `clamp()`, kolom utama mengambil sisa ruang, dan gutter ikut skala ruang yang tersedia. Pada desktop/tablet, sidebar dan header sejajar di atas; pada layar sempit, navigasi mengalir di atas konten.
+- Jangan menetapkan lebar halaman atau header dengan angka tetap, `max-width` halaman, atau pemusatan `margin-inline: auto`. Header, dashboard, daftar judul, tabel, dan panel penuh mengisi kolom utama. Formulir/bacaan yang perlu sempit boleh memakai batas intrinsik, tetapi tetap rata kiri.
+- Gunakan `clamp()`, unit relatif (`rem`, `%`, `cqi`), `minmax()`, `auto-fit`/`auto-fill`, serta ukuran intrinsik untuk jarak, kolom, dan tipografi. Gunakan container query saat isi perlu tersusun ulang berdasarkan ruang komponennya; hindari menyesuaikan layout hanya dengan daftar breakpoint perangkat.
+- Gutter shell memperhitungkan safe area perangkat melalui `env(safe-area-inset-*)`. Header sticky mengikuti gutter atas yang sama dengan sidebar dan mengisi lebar kolom utama. Jarak ke isi berikutnya ikut skala gutter, bukan tinggi header tetap.
+- Header ringkas menempatkan satu judul halaman di kiri dan kontrol mode gelap serta profil di kanan. Jangan tampilkan kalimat deskripsi di bawah judul header. Di container sempit, label kontrol menghilang atau kontrol turun ke baris berikutnya; tidak boleh menimbulkan scroll horizontal.
+- Judul header selalu mengikuti halaman aktif. Simpan `workspaceTitle` di metadata rute (`definePageMeta`); variasi peran ditangani oleh header bersama. Dashboard menampilkan judul sesuai peran, sedangkan `/capstone` menampilkan “Daftar judul capstone” atau “Judul capstone saya”. Metadata deskripsi boleh dipakai di isi halaman, tetapi tidak ditampilkan di header.
+- Header menjadi satu-satunya tempat H1. Hapus judul `.page-heading` dari isi halaman agar tidak muncul ganda; isi halaman dimulai dari ringkasan, form, atau panel utama. Aksi pekerjaan tetap di header panel terkait.
+- Pertahankan gutter dan tepi konten saat sidebar diciutkan. Area interaksi tetap memiliki target minimal 44 px untuk aksesibilitas sentuh.
+
+- Header panel memakai padding dan jarak fluid berbasis `clamp()`/`cqi`; judul dan jumlah hasil mengikuti skala tipografi. Di ponsel, kontrol dapat turun ke baris berikutnya tanpa scroll horizontal.
 - Ringkasan memakai satu panel dengan garis pemisah, angka 36 px, serta dua kolom pada ponsel. `WorkspaceStatistics` dipakai oleh User Management dan dashboard.
 - Pencarian memakai `WorkspaceSearch`: ikon kiri, latar canvas, border/radius 12 px, tombol Cari di dalam kolom, hapus pencarian, dan focus ring. Seluruh dropdown memakai `WorkspaceSelect`, termasuk filter User Management, agar menu terbuka juga mengikuti tema. Navigasi Arrow/Home/End, Enter/Space, pencarian berdasarkan huruf, Tab, dan Escape ditangani komponen; opsi aktif dan terpilih memiliki status ARIA.
 - Tabel pengguna dan tabel capstone memakai dasar `.workspace-table`: header canvas/teks muted 14 px, isi 15 px, tinggi baris dan hover sama. Daftar judul/bidang minat disusun ulang menjadi baris bertumpuk pada panel sempit. Finalisasi tetap tabel bergeser karena membandingkan penetapan antarkolom.
@@ -158,9 +168,10 @@ Checkbox memakai appearance none, border dan indikator centang dari CSS proyek; 
   - Textbox pencarian: pembungkus berlatar `#fdfdfc`, border `#dededb`, `border-radius: 12px`, ikon kaca pembesar terintegrasi di kiri, tombol 'x' clear cepat, dan tombol submit "Cari" sebagai pill ungu di dalam input. Focus ring: `box-shadow: 0 0 0 3px rgba(103, 65, 207, 0.12)`.
   - Dropdown status: Custom Floating Popover Dropdown menggantikan `<select>` native. Memiliki panah chevron berputar halus, dot indikator status aktif/nonaktif, menu mengambang bersudut 14 px dengan bayangan lembut, checkmark pada opsi terpilih, serta penutup otomatis via click-outside dan tombol Escape.
 - **Sidebar**:
-  - Jarak 16 px dari tepi desktop, radius 20 px, border tipis, bayangan ringan. Lebar terbuka 264 px, diminimalkan 88 px.
+  - Gutter tepi dan lebar sidebar mengikuti grid fluid workspace. Radius 20 px, border tipis, dan bayangan ringan. Lebar terbuka memakai `clamp()`; saat diminimalkan, kolomnya mengecil secara proporsional. Di layar sempit, sidebar mengalir di atas konten.
   - Menu navigasi mencakup: **Manajemen pengguna** (`/admin/users`) dan **Profil saya** (`/account`). Halaman aktivitas telah ditiadakan.
   - Toggle collapse/expand dapat dioperasikan via keyboard, memiliki `aria-expanded`, dan preferensi disimpan dalam cookie.
+- Menu halaman aktif menggunakan latar aksen solid dan teks/ikon putih. Status aktif mengikuti halaman setelah selesai dimuat; saat navigasi masih menunggu, pilihan lama tetap aktif. Bidang aktif meluncur ke menu baru dengan transisi yang menghormati `prefers-reduced-motion`.
 - **Komponen Fitur**:
   - Auth: `LoginView` + `LoginForm` + `CampusIllustration`
   - Users: `UserManagement` + `UserFilters` + `UserTable` + `StudentForm` + `LecturerForm` + `AdminForm` + `UserPasswordReset`

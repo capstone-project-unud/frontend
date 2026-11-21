@@ -20,7 +20,7 @@
 .cap-table td>div+div { margin-top: .75rem; }.cap-table .button { margin-top: .5rem; }
 .finalization-table { min-width: 1050px; }.finalization-table td:last-child { white-space: normal; }.finalization-table td { min-width: 190px; }.finalization-table .workspace-select { min-width: 210px; }.finalization-table th[scope=row] { min-width: 180px; }
 .cap-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding-block: 1rem; font-size: .9375rem; }
-.cap-link { color: var(--accent); text-decoration: underline; }.cap-preserve { white-space: pre-wrap; overflow-wrap: anywhere; }
+.cap-link { color: var(--accent); text-decoration: underline; }.cap-back-link { display: inline-flex; margin-bottom: 1rem; }.cap-preserve { white-space: pre-wrap; overflow-wrap: anywhere; }
 .member-row { display: grid; gap: 1rem; border-top: 1px solid var(--line); padding-top: 1.5rem; }
 .decision-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.5rem; }.decision-columns .cap-actions { margin-top: .75rem; }
 .cap-review { display: grid; gap: 1rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
@@ -35,6 +35,12 @@
 .cap-list-panel { min-width: 0; overflow: hidden; container: cap-records / inline-size; }
 .cap-list-panel .cap-table-wrap { border: 0; border-radius: 0; }
 .cap-list-panel .cap-table-wrap:focus-visible { outline-offset: -3px; }
+.cap-list-panel .empty-state { border-top: 1px solid var(--line); padding: 3.5rem 1.5rem; }
+.cap-list-panel .cap-loading { border-top: 1px solid var(--line); margin: 0; }
+.cap-panel-items { display: grid; }
+.cap-panel-item { display: grid; gap: 1.125rem; padding: 1.5rem; border-top: 1px solid var(--line); min-width: 0; }
+.cap-panel-item h2,.cap-panel-item h3 { font-size: 1.0625rem; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.cap-section+.cap-list-panel,.workspace-statistics-panel+.cap-list-panel { margin-top: 1.5rem; }
 .cap-table th:last-child,.cap-table td:last-child { padding-right: 1.5rem; }
 .cap-table .cap-action-heading,.cap-table .cap-row-actions { text-align: right; }
 .cap-row-actions .workspace-text-action { white-space: nowrap; }
@@ -54,4 +60,4 @@ form.cap-section { margin-bottom: 1.5rem; }
   .cap-record-table td:first-child { grid-column: 1 / -1; }
   .cap-record-table .cap-row-actions { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: .5rem; }
 }
-@media(max-width:767px) { .cap-section { padding: 1.25rem; }.decision-columns { grid-template-columns: minmax(0,1fr); }.cap-filters { align-items: stretch; }.cap-filters .field { flex-basis: 100%; }.cap-pagination>.cap-actions { width: 100%; }.cap-dialog { padding: 1.25rem; }.cap-dialog-actions { margin: 0 -1.25rem -1.25rem; padding: 1rem 1.25rem; }.cap-panel-footer { padding: 1rem; }.cap-panel-feedback { margin-inline: 1rem; } }
+@media(max-width:767px) { .cap-section,.cap-panel-item { padding: 1.25rem; }.cap-list-panel .empty-state { padding: 2.5rem 1rem; }.decision-columns { grid-template-columns: minmax(0,1fr); }.cap-filters { align-items: stretch; }.cap-filters .field { flex-basis: 100%; }.cap-pagination>.cap-actions { width: 100%; }.cap-dialog { padding: 1.25rem; }.cap-dialog-actions { margin: 0 -1.25rem -1.25rem; padding: 1rem 1.25rem; }.cap-panel-footer { padding: 1rem; }.cap-panel-feedback { margin-inline: 1rem; } }

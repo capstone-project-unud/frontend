@@ -3,7 +3,10 @@ import type { Role, User, UserInput } from '~/types/user'
 import UserPasswordReset from './UserPasswordReset.vue'
 
 const props = withDefaults(defineProps<{ user: User | null; busy: boolean; error: string; accountRole?: 'ADMIN' | 'KOORDINATOR_TA' | 'TU' }>(), { accountRole: 'ADMIN' })
-const roleName = computed(() => ({ ADMIN: 'Administrator', KOORDINATOR_TA: 'Koordinator TA', TU: 'Tata usaha' })[props.accountRole])
+const roleName = computed(() => ({ ADMIN: 'Administrator', KOORDINATOR_TA: 'Koordinator Capstone', TU: 'Tata usaha' })[props.accountRole])
+const emailPlaceholder = computed(() => ({ ADMIN: 'admin@unud.ac.id', KOORDINATOR_TA: 'koordinator@unud.ac.id', TU: 'tu@unud.ac.id' })[props.accountRole])
+const createLabel = computed(() => ({ ADMIN: 'Buat akun admin', KOORDINATOR_TA: 'Buat akun koordinator', TU: 'Buat akun tata usaha' })[props.accountRole])
+const accessNote = computed(() => ({ ADMIN: 'Administrator dapat langsung masuk dan mengelola sistem.', KOORDINATOR_TA: 'Koordinator Capstone dapat langsung memvalidasi judul dan pembimbing.', TU: 'Staf tata usaha dapat langsung memverifikasi berkas UP.' })[props.accountRole])
 const emit = defineEmits<{ save: [input: UserInput]; reset: [password: string]; close: [] }>()
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 
@@ -63,12 +66,12 @@ function save() {
           <div class="field-grid">
             <div class="field full">
               <label for="admin-name">Nama lengkap</label>
-              <input id="admin-name" v-model="form.full_name" autocomplete="name" required minlength="2" maxlength="150" placeholder="Nama lengkap administrator">
+              <input id="admin-name" v-model="form.full_name" autocomplete="name" required minlength="2" maxlength="150" :placeholder="`Nama lengkap ${roleName.toLowerCase()}`">
             </div>
 
             <div class="field full">
               <label for="admin-email">Email sistem</label>
-              <input id="admin-email" v-model="form.email" type="email" autocomplete="email" required maxlength="254" placeholder="admin@unud.ac.id">
+              <input id="admin-email" v-model="form.email" type="email" autocomplete="email" required maxlength="254" :placeholder="emailPlaceholder">
             </div>
 
             <div class="field full">
@@ -93,14 +96,14 @@ function save() {
                   {{ visible ? 'Sembunyikan' : 'Lihat' }}
                 </button>
               </div>
-              <small>Sampaikan kata sandi ini secara aman kepada administrator terkait.</small>
+              <small>Sampaikan kata sandi ini secara aman kepada {{ roleName.toLowerCase() }} terkait.</small>
             </div>
 
             <label v-if="!user" class="check-card full">
               <input v-model="form.is_active" type="checkbox" class="modern-checkbox">
               <div class="check-text">
                 <strong>Aktifkan akun segera</strong>
-                <span>Administrator dapat langsung masuk dan mengelola sistem</span>
+                <span>{{ accessNote }}</span>
               </div>
             </label>
           </div>
@@ -112,7 +115,7 @@ function save() {
       <div class="dialog-actions">
         <button class="button secondary" type="button" :disabled="busy" @click="close">Batal</button>
         <button class="button primary submit-btn" type="submit" :disabled="busy">
-          {{ busy ? 'Menyimpan…' : user ? 'Simpan perubahan' : 'Buat akun admin' }}
+          {{ busy ? 'Menyimpan…' : user ? 'Simpan perubahan' : createLabel }}
         </button>
       </div>
     </form>

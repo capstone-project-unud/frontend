@@ -1,16 +1,28 @@
 <script setup lang="ts">
 defineProps<{ busy: boolean; error: string }>()
-const emit = defineEmits<{ submit: [email: string, password: string] }>()
-const email = shallowRef('')
+const emit = defineEmits<{ submit: [identifier: string, password: string] }>()
+const identifier = shallowRef('')
 const password = shallowRef('')
 const visible = shallowRef(false)
 </script>
 
 <template>
-  <form class="login-form" @submit.prevent="emit('submit', email, password)">
+  <form class="login-form" @submit.prevent="emit('submit', identifier, password)">
     <div class="line-field">
-      <label for="email">Email</label>
-      <input id="email" v-model="email" type="email" autocomplete="username" placeholder="nama@unud.ac.id" required maxlength="254" :disabled="busy">
+      <label for="identifier">Email, NIM, NIP, atau NIDN</label>
+      <input
+        id="identifier"
+        v-model="identifier"
+        type="text"
+        inputmode="text"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="nama@unud.ac.id / NIM / NIP / NIDN"
+        required
+        maxlength="254"
+        :disabled="busy"
+      >
     </div>
     <div class="line-field password-field">
       <label for="password">Kata sandi</label>
@@ -23,7 +35,7 @@ const visible = shallowRef(false)
     <button class="button primary login-submit" :disabled="busy" type="submit">{{ busy ? 'Sedang masuk…' : 'Masuk' }}</button>
     <details class="login-help">
       <summary>Butuh bantuan masuk?</summary>
-      <p>Hubungi admin program studi untuk mendapatkan akun, mengaktifkan akun, atau meminta pengaturan ulang kata sandi.</p>
+      <p>Mahasiswa dapat masuk memakai email atau NIM, dosen memakai email, NIP, atau NIDN, sedangkan admin, koordinator capstone, dan tata usaha memakai email akun.</p>
     </details>
   </form>
 </template>

@@ -92,7 +92,7 @@ async function loadCohortStudents() {
       query: {
         role: 'MAHASISWA',
         admission_year: selectedCohort.value,
-        limit: 200,
+        limit: 500,
       },
     })
     students.value = data.items || []

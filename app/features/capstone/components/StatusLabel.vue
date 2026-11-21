@@ -5,5 +5,7 @@ defineProps<{ value: string }>()
 <template><span class="status-label" :class="value.toLowerCase()">{{ labels[value] || value }}</span></template>
 <style scoped>
 .status-label { display: inline-flex; color: var(--muted); font-size: .9375rem; font-weight: 600; white-space: nowrap; }
-.approved,.finalized,.valid { color: var(--success); }.revision,.rejected { color: var(--error); }.submitted,.pending { color: var(--muted); }
+.approved,.finalized,.valid,.layak,.passed,.published,.active,.answered,.ready { color: var(--success); }
+.revision,.rejected,.revisi,.ditolak,.failed,.insufficient_context { color: var(--error); }
+.submitted,.pending,.scheduled,.registered,.indexed,.locked,.open { color: var(--info); }
 </style>

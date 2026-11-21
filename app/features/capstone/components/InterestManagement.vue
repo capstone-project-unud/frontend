@@ -27,8 +27,7 @@ async function toggle(i: Interest) { if (await api.mutate('/interests/' + i.id, 
 </script>
 
 <template>
-  <section aria-labelledby="interests-heading">
-    <header class="page-heading"><div><h1 id="interests-heading">Bidang minat</h1><p>Kelola pilihan bidang minat untuk pendaftaran judul.</p></div></header>
+  <section aria-labelledby="workspace-page-title">
     <p v-if="error && !editing" role="alert" class="notice error cap-feedback">{{ error }}</p>
     <p v-if="message" role="status" class="notice success cap-feedback">{{ message }}</p>
     <div class="panel workspace-panel cap-list-panel">

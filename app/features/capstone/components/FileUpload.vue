@@ -4,16 +4,17 @@ import { apiMessage } from '~/utils/format'
 import WorkspaceFilePicker from '~/components/workspace/WorkspaceFilePicker.vue'
 const props = withDefaults(defineProps<{ label: string; accept?: string; disabled?: boolean }>(), { accept: '.pdf' })
 const model = defineModel<string | null>({ default: null })
+const emit = defineEmits<{ uploading: [value: boolean] }>()
 const busy = shallowRef(false)
 const error = shallowRef('')
 const name = shallowRef('')
 const id = useId()
 async function upload(file: File) {
  error.value = ''; if (file.size > 10 * 1024 * 1024) { error.value = 'Ukuran berkas maksimal 10 MB.'; return }
- busy.value = true
+ busy.value = true; emit('uploading', true)
  try { const body = new FormData(); body.append('file', file); const data = await $fetch<{ file: { id: string; name: string } }>(capstoneAPI + '/files', { method: 'POST', body }); model.value = data.file.id; name.value = data.file.name }
  catch (e) { error.value = apiMessage(e) }
- finally { busy.value = false }
+ finally { busy.value = false; emit('uploading', false) }
 }
 </script>
 <template>

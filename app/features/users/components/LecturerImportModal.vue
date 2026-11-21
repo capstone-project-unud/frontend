@@ -2,6 +2,7 @@
 import WorkspaceFilePicker from '~/components/workspace/WorkspaceFilePicker.vue'
 import { downloadLecturerTemplate, parseLecturerFile, type ParsedLecturerRow } from '~/utils/lecturerExportImport'
 import type { Role, User } from '~/types/user'
+import { apiMessage } from '~/utils/format'
 
 const emit = defineEmits<{ close: []; imported: [] }>()
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
@@ -46,6 +47,25 @@ async function processFile(file: File) {
   }
 }
 
+function matchesLecturer(u: User, row: ParsedLecturerRow) {
+  if (u.email.toLowerCase() === row.email.toLowerCase()) return true
+  if (row.nip && u.nip === row.nip) return true
+  if (row.nidn && u.nidn === row.nidn) return true
+  return false
+}
+
+async function findExistingLecturer(row: ParsedLecturerRow): Promise<User | undefined> {
+  for (const term of [row.email, row.nip, row.nidn]) {
+    if (!term) continue
+    const searchRes = await $fetch<{ items: User[]; total: number }>('/api/v1/users', {
+      query: { q: term, limit: 20 },
+    })
+    const matched = (searchRes.items || []).find(u => matchesLecturer(u, row))
+    if (matched) return matched
+  }
+  return undefined
+}
+
 async function startImport() {
   if (validRows.value.length === 0 || isImporting.value) return
 
@@ -65,37 +85,35 @@ async function startImport() {
     progressCount.value = i + 1
 
     try {
-      // 1. Cek keberadaan dosen berdasarkan email institusi atau NIP/NIDN
-      const searchRes = await $fetch<{ items: User[]; total: number }>('/api/v1/users', {
-        query: { q: row.email, role: 'DOSEN' },
-      })
-
-      const existing = (searchRes.items || []).find((u) => {
-        if (u.email.toLowerCase() === row.email.toLowerCase()) return true
-        if (row.nip && u.nip === row.nip) return true
-        if (row.nidn && u.nidn === row.nidn) return true
-        return false
-      })
+      // 1. Cek keberadaan dosen berdasarkan email institusi atau NIP/NIDN tanpa filter tab agar dosen Koordinator Capstone tetap ditemukan
+      const existing = await findExistingLecturer(row)
 
       const targetRoles: Role[] = ['DOSEN']
-      if (row.is_koprodi) {
-        targetRoles.push('KOPRODI')
+      if (row.is_coordinator) {
+        targetRoles.push('KOORDINATOR_TA')
       }
 
+      if (existing?.roles.includes('KOPRODI')) targetRoles.push('KOPRODI')
       if (existing) {
-        // Cek apakah ada data yang berubah
-        const currentHasKoprodi = existing.roles.includes('KOPRODI')
+        if (!existing.roles.includes('DOSEN')) {
+          failedItems.value.push({
+            identifier: row.nip || row.nidn || row.email,
+            reason: 'Email, NIP, atau NIDN sudah digunakan akun non-dosen.',
+          })
+          continue
+        }
+
+        const currentHasCoordinator = existing.roles.includes('KOORDINATOR_TA')
         const hasChanges =
           existing.full_name !== row.full_name ||
           existing.email.toLowerCase() !== row.email.toLowerCase() ||
-          currentHasKoprodi !== row.is_koprodi ||
+          currentHasCoordinator !== row.is_coordinator ||
           (existing.nip || '') !== row.nip ||
           (existing.nidn || '') !== row.nidn ||
           (existing.phone || '') !== row.phone ||
           (existing.expertise || '') !== row.expertise
 
         if (hasChanges) {
-          // Overwrite data dosen lama dengan data baru
           await $fetch(`/api/v1/users/${existing.id}`, {
             method: 'PUT',
             body: {
@@ -115,6 +133,14 @@ async function startImport() {
           skippedCount.value++
         }
       } else {
+        if (!row.password) {
+          failedItems.value.push({
+            identifier: row.nip || row.nidn || row.email,
+            reason: 'Kata sandi awal wajib diisi untuk akun dosen baru (minimal 12 karakter).',
+          })
+          continue
+        }
+
         // Buat akun dosen baru
         await $fetch('/api/v1/users', {
           method: 'POST',
@@ -126,17 +152,17 @@ async function startImport() {
             nidn: row.nidn || null,
             phone: row.phone,
             expertise: row.expertise,
-            password: row.password || 'SandiDosen123!',
+            password: row.password,
             nim: null,
             admission_year: null,
           },
         })
         createdCount.value++
       }
-    } catch (err: any) {
+    } catch (err) {
       failedItems.value.push({
         identifier: row.nip || row.nidn || row.email,
-        reason: err?.data?.message || err?.message || 'Gagal menyimpan ke database.',
+        reason: apiMessage(err),
       })
     }
   }
@@ -176,7 +202,7 @@ async function startImport() {
           </svg>
           <div>
             <strong>Gunakan Template Excel Resmi Dosen</strong>
-            <span>Pastikan kolom NIP, NIDN, Nama Lengkap & Gelar, Email Institusi, Telepon, Keahlian, dan Peran Koprodi sesuai format.</span>
+            <span>Pastikan kolom NIP, NIDN, Nama Lengkap & Gelar, Email Institusi, Telepon, Keahlian, dan Peran Koordinator Capstone sesuai format.</span>
           </div>
         </div>
         <button type="button" class="template-btn" @click="downloadLecturerTemplate">
@@ -273,8 +299,8 @@ async function startImport() {
                 <td>{{ row.email }}</td>
                 <td>{{ row.expertise || '—' }}</td>
                 <td>
-                  <span class="role-tag" :class="{ koprodi: row.is_koprodi }">
-                    {{ row.is_koprodi ? 'Dosen & Koprodi' : 'Dosen' }}
+                  <span class="role-tag" :class="{ coordinator: row.is_coordinator }">
+                    {{ row.is_coordinator ? 'Dosen & Koordinator Capstone' : 'Dosen' }}
                   </span>
                 </td>
                 <td>
@@ -622,7 +648,7 @@ async function startImport() {
   color: var(--ink);
 }
 
-.role-tag.koprodi {
+.role-tag.coordinator {
   border-color: var(--accent);
   color: var(--accent);
 }

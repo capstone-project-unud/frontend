@@ -7,12 +7,12 @@ const auth = useAuth()
 const route = useRoute()
 const busy = shallowRef(false)
 const error = shallowRef('')
-async function submit(email: string, password: string) {
+async function submit(identifier: string, password: string) {
   if (busy.value) return
   busy.value = true
   error.value = ''
   try {
-    await auth.login(email, password)
+    await auth.login(identifier, password)
     await navigateTo('/dashboard')
   } catch (e) { error.value = apiMessage(e) }
   finally { busy.value = false }
@@ -27,7 +27,7 @@ async function submit(email: string, password: string) {
       <div class="story-copy"><h1>Dari ide,<br>menjadi karya.</h1></div>
     </section>
     <section class="login-panel" aria-labelledby="login-heading">
-      <div class="login-content"><h2 id="login-heading">Selamat datang.</h2><p class="login-subtitle">Gunakan akun yang disiapkan oleh admin.</p><p v-if="route.query.changed === '1'" class="notice success password-changed" role="status">Kata sandi berhasil diubah. Silakan masuk kembali.</p><LoginForm :busy="busy" :error="error" @submit="submit" /></div>
+      <div class="login-content"><h2 id="login-heading">Selamat datang.</h2><p class="login-subtitle">Gunakan akun yang disiapkan oleh admin.</p><NuxtLink class="login-gallery-link" to="/">&larr; Jelajahi pameran karya publik tanpa masuk</NuxtLink><p v-if="route.query.changed === '1'" class="notice success password-changed" role="status">Kata sandi berhasil diubah. Silakan masuk kembali.</p><LoginForm :busy="busy" :error="error" @submit="submit" /></div>
     </section>
   </main>
 </template>
@@ -43,6 +43,8 @@ async function submit(email: string, password: string) {
 .login-content { width: 100%; max-width: 340px; margin: auto; padding: 2rem 0; }
 .login-content h2 { font-size: clamp(1.75rem,2.3vw,2.25rem); letter-spacing: -.04em; font-weight: 600; line-height: 1.2; }
 .login-subtitle { margin-top: 1rem; font-size: 1rem; color: var(--muted); line-height: 1.6; }
+.login-gallery-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: .35rem; font-size: .9375rem; font-weight: 500; color: var(--accent); text-decoration: none; }
+.login-gallery-link:hover { color: var(--accent-hover); text-decoration: underline; }
 .password-changed { margin-top: 1rem; }
 @media(min-width:1600px) { .story-art { max-height: 620px; } }
 @media(min-width:768px) and (max-width:1199px) { .login-page { grid-template-columns: 55fr 45fr; } .story-panel { padding: 2rem; } .story-art { width: 100%; } }

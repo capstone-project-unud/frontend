@@ -29,8 +29,9 @@ watch(() => props.query.q, (val) => {
 const tabs: { value: Role; label: string }[] = [
   { value: 'MAHASISWA', label: 'Mahasiswa' },
   { value: 'DOSEN', label: 'Dosen' },
+  { value: 'KOPRODI', label: 'Koprodi' },
   { value: 'ADMIN', label: 'Admin' },
-  { value: 'KOORDINATOR_TA', label: 'Koordinator TA' },
+  { value: 'KOORDINATOR_TA', label: 'Koordinator Capstone' },
   { value: 'TU', label: 'Tata usaha' },
 ]
 

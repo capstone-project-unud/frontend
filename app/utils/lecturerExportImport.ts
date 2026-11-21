@@ -8,7 +8,7 @@ export interface ParsedLecturerRow {
   email: string
   phone: string
   expertise: string
-  is_koprodi: boolean
+  is_coordinator: boolean
   password: string
   isValid: boolean
   errorReason?: string
@@ -22,7 +22,7 @@ export function downloadLecturerTemplate() {
     'Email Institusi',
     'Nomor Telepon',
     'Bidang Keahlian',
-    'Peran Koprodi',
+    'Peran Koordinator Capstone',
     'Kata Sandi Awal',
   ]
 
@@ -35,7 +35,7 @@ export function downloadLecturerTemplate() {
       '081234567890',
       'Tata Kelola Teknologi Informasi',
       'Ya',
-      'SandiDosen123!',
+      'GantiSandiAwal12!',
     ],
     [
       '198507202012122001',
@@ -45,7 +45,7 @@ export function downloadLecturerTemplate() {
       '081234567891',
       'Data Science',
       'Tidak',
-      'SandiDosen123!',
+      'GantiSandiAwal12!',
     ],
     [
       '198811052015041003',
@@ -55,7 +55,7 @@ export function downloadLecturerTemplate() {
       '081234567892',
       'Sistem Informasi',
       'Tidak',
-      'SandiDosen123!',
+      'GantiSandiAwal12!',
     ],
   ]
 
@@ -69,7 +69,7 @@ export function downloadLecturerTemplate() {
     { wch: 32 }, // Email Institusi
     { wch: 18 }, // Nomor Telepon
     { wch: 40 }, // Bidang Keahlian
-    { wch: 16 }, // Peran Koprodi
+    { wch: 26 }, // Peran Koordinator Capstone
     { wch: 20 }, // Kata Sandi Awal
   ]
 
@@ -92,7 +92,7 @@ export function exportLecturersToExcel(lecturers: User[]) {
   ]
 
   const rows = lecturers.map((d) => {
-    const rolesText = d.roles.includes('KOPRODI') ? 'Dosen & Koprodi' : 'Dosen'
+    const rolesText = d.roles.map(role => ({ DOSEN: 'Dosen', KOPRODI: 'Koprodi', KOORDINATOR_TA: 'Koordinator Capstone' })[role as 'DOSEN' | 'KOPRODI' | 'KOORDINATOR_TA'] || role).join(' & ')
     return [
       d.nip || '',
       d.nidn || '',
@@ -149,7 +149,7 @@ export async function parseLecturerFile(file: File): Promise<ParsedLecturerRow[]
   const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('surel'))
   const phoneIdx = headers.findIndex(h => h.includes('telepon') || h.includes('telp') || h.includes('phone') || h.includes('hp'))
   const expIdx = headers.findIndex(h => h.includes('keahlian') || h.includes('expertise') || h.includes('bidang') || h.includes('riset'))
-  const koprodiIdx = headers.findIndex(h => h.includes('koprodi') || h.includes('koordinator'))
+  const coordIdx = headers.findIndex(h => h.includes('koordinator'))
   const passIdx = headers.findIndex(h => h.includes('sandi') || h.includes('password') || h.includes('pass'))
 
   const results: ParsedLecturerRow[] = []
@@ -166,8 +166,8 @@ export async function parseLecturerFile(file: File): Promise<ParsedLecturerRow[]
     const email = emailIdx >= 0 ? String(row[emailIdx] ?? '').trim().toLowerCase() : ''
     const phone = phoneIdx >= 0 ? String(row[phoneIdx] ?? '').trim() : ''
     const expertise = expIdx >= 0 ? String(row[expIdx] ?? '').trim() : ''
-    const koprodiRaw = koprodiIdx >= 0 ? String(row[koprodiIdx] ?? '').trim().toLowerCase() : ''
-    const isKoprodi = ['ya', 'yes', 'true', '1', 'koprodi'].includes(koprodiRaw)
+    const coordRaw = coordIdx >= 0 ? String(row[coordIdx] ?? '').trim().toLowerCase() : ''
+    const isCoordinator = ['ya', 'yes', 'true', '1', 'koordinator', 'koordinator capstone', 'koordinator ta'].includes(coordRaw)
     const password = passIdx >= 0 ? String(row[passIdx] ?? '').trim() : ''
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -210,8 +210,8 @@ export async function parseLecturerFile(file: File): Promise<ParsedLecturerRow[]
       email,
       phone,
       expertise,
-      is_koprodi: isKoprodi,
-      password: password || 'SandiDosen123!',
+      is_coordinator: isCoordinator,
+      password,
       isValid,
       errorReason: errorReason || undefined,
     })
