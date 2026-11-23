@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
 import type { CapstoneGroup, Interest, MemberInput, Project, ProjectInput } from '../types'
-import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import { capstoneAPI, useCachedReference, useCapstone } from '../composables/useCapstone'
 import PersonPicker from './PersonPicker.vue'
 import FileUpload from './FileUpload.vue'
 
@@ -12,8 +12,8 @@ const emit = defineEmits<{ saved: [project: Project]; cancel: [] }>()
 const fetcher = useRequestFetch()
 const route = useRoute()
 
-const { data: interests, error: interestError, refresh } = await useAsyncData('capstone-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
-const { data: groupsData } = await useAsyncData('capstone-groups-for-topic', () => fetcher<{ items: CapstoneGroup[] }>(capstoneAPI + '/groups'))
+const { data: interests, error: interestError, refresh } = await useCachedReference<{ items: Interest[] }>('capstone-interests', '/interests')
+const { data: groupsData } = await useLazyAsyncData('capstone-groups-for-topic', () => fetcher<{ items: CapstoneGroup[] }>(capstoneAPI + '/groups'))
 
 const fields = computed(() => interests.value?.items.filter(i => i.is_active) || [])
 const ownID = computed(() => api.user.value?.id || '')

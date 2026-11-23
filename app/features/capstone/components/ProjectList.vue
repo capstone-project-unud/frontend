@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Project, Interest } from '../types'
-import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import { capstoneAPI, useCachedReference, useCapstone } from '../composables/useCapstone'
 import StatusLabel from './StatusLabel.vue'
 import TopicSeminarsPanel from './TopicSeminarsPanel.vue'
 import WorkspaceSearch from '~/components/workspace/WorkspaceSearch.vue'
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 
 const api = useCapstone()
 const { student, staff, busy, error } = api
@@ -13,8 +14,8 @@ const q = shallowRef(''), search = shallowRef(''), interest = shallowRef(''), st
 const query = computed(() => ({ q: q.value, interest_id: interest.value, status: state.value, page: page.value }))
 watch([interest, state, q], () => { page.value = 1 })
 
-const { data, status, error: loadError, refresh } = await useAsyncData('capstone-project-list', () => fetcher<{ items: Project[]; total: number; limit: number }>(capstoneAPI + '/projects', { query: query.value }), { watch: [query] })
-const { data: interests } = await useAsyncData('capstone-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
+const { data, status, error: loadError, refresh } = await useLazyAsyncData('capstone-project-list', () => fetcher<{ items: Project[]; total: number; limit: number }>(capstoneAPI + '/projects', { query: query.value }), { watch: [query] })
+const { data: interests } = await useCachedReference<{ items: Interest[] }>('capstone-interests', '/interests')
 const pages = computed(() => Math.max(1, Math.ceil((data.value?.total || 0) / 20)))
 const interestOptions = computed(() => [{ value: '', label: 'Semua bidang minat' }, ...(interests.value?.items || []).map(i => ({ value: i.id, label: i.name }))])
 const statusOptions = [
@@ -54,7 +55,7 @@ function exportList() {
       </form>
 
       <p v-if="error" role="alert" class="notice error cap-panel-feedback">{{ error }}</p>
-      <p v-if="status === 'pending'" class="cap-loading" role="status">Memuat daftar judul…</p>
+      <WorkspaceSkeleton v-if="status === 'pending'" variant="table" :rows="5" label="Memuat daftar judul…" />
       <div v-else-if="loadError" class="empty-state">
         <h2>Daftar belum dapat dimuat</h2>
         <p>Periksa koneksi lalu coba kembali.</p>

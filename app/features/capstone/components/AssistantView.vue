@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import FileUpload from './FileUpload.vue'
 import StatusLabel from './StatusLabel.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
 import type { ChatMessage, ChatSession, KnowledgeSource } from '../types'
 import { dateTime } from '~/utils/format'
@@ -11,8 +12,8 @@ const isAdmin = computed(() => api.user.value?.roles.includes('ADMIN') ?? false)
 const fetcher = useRequestFetch()
 const tab = shallowRef<'chat' | 'kb'>('chat')
 
-const { data: sessionsData, refresh: refreshSessions } = await useAsyncData('assistant-sessions', () => fetcher<{ items: ChatSession[] }>(capstoneAPI + '/assistant/sessions'))
-const { data: sourcesData, refresh: refreshSources } = await useAsyncData('assistant-sources', () => fetcher<{ items: KnowledgeSource[] }>(capstoneAPI + '/assistant/sources'))
+const { data: sessionsData, status: sessionStatus, refresh: refreshSessions } = await useLazyAsyncData('assistant-sessions', () => fetcher<{ items: ChatSession[] }>(capstoneAPI + '/assistant/sessions'))
+const { data: sourcesData, refresh: refreshSources } = await useLazyAsyncData('assistant-sources', () => fetcher<{ items: KnowledgeSource[] }>(capstoneAPI + '/assistant/sources'))
 
 const activeSessionID = shallowRef<string | null>(null)
 const question = shallowRef('')
@@ -87,18 +88,21 @@ async function activateSource(id: string) {
           <button type="button" class="workspace-text-action" @click="activeSessionID = null">+ Baru</button>
         </div>
         <div class="cap-panel-items">
-          <button
-            v-for="s in sessionsData?.items || []"
-            :key="s.id"
-            type="button"
-            class="session-item"
-            :class="{ active: s.id === activeSessionID }"
-            @click="activeSessionID = s.id"
-          >
-            <strong>{{ s.title }}</strong>
-            <small class="muted">{{ dateTime(s.updated_at) }}</small>
-          </button>
-          <p v-if="!sessionsData?.items.length" class="cap-panel-item muted">Belum ada riwayat pertanyaan.</p>
+          <WorkspaceSkeleton v-if="sessionStatus === 'pending'" variant="spinner" label="Memuat riwayat…" />
+          <template v-else>
+            <button
+              v-for="s in sessionsData?.items || []"
+              :key="s.id"
+              type="button"
+              class="session-item"
+              :class="{ active: s.id === activeSessionID }"
+              @click="activeSessionID = s.id"
+            >
+              <strong>{{ s.title }}</strong>
+              <small class="muted">{{ dateTime(s.updated_at) }}</small>
+            </button>
+            <p v-if="!sessionsData?.items.length" class="cap-panel-item muted">Belum ada riwayat pertanyaan.</p>
+          </template>
         </div>
       </aside>
 

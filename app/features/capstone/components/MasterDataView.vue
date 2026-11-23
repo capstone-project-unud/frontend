@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import InterestManagement from './InterestManagement.vue'
 import StatusLabel from './StatusLabel.vue'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
@@ -10,10 +11,10 @@ const { busy, error, message } = api
 const fetcher = useRequestFetch()
 const tab = shallowRef<'periods' | 'interests' | 'doctypes' | 'stages' | 'rubrics'>('periods')
 
-const { data: periodsData, refresh: refreshPeriods } = await useAsyncData('master-periods', () => fetcher<{ items: AcademicPeriod[] }>(capstoneAPI + '/master/periods'))
-const { data: docsData, refresh: refreshDocs } = await useAsyncData('master-docs', () => fetcher<{ items: DocumentType[] }>(capstoneAPI + '/master/document-types'))
-const { data: stagesData, refresh: refreshStages } = await useAsyncData('master-stages', () => fetcher<{ items: StageRequirement[] }>(capstoneAPI + '/master/stage-requirements'))
-const { data: rubricsData, refresh: refreshRubrics } = await useAsyncData('master-rubrics', () => fetcher<{ items: AssessmentRubricItem[] }>(capstoneAPI + '/master/rubrics'))
+const { data: periodsData, status: periodsStatus, refresh: refreshPeriods } = await useLazyAsyncData('master-periods', () => fetcher<{ items: AcademicPeriod[] }>(capstoneAPI + '/master/periods'))
+const { data: docsData, status: docsStatus, refresh: refreshDocs } = await useLazyAsyncData('master-docs', () => fetcher<{ items: DocumentType[] }>(capstoneAPI + '/master/document-types'))
+const { data: stagesData, status: stagesStatus, refresh: refreshStages } = await useLazyAsyncData('master-stages', () => fetcher<{ items: StageRequirement[] }>(capstoneAPI + '/master/stage-requirements'))
+const { data: rubricsData, status: rubricsStatus, refresh: refreshRubrics } = await useLazyAsyncData('master-rubrics', () => fetcher<{ items: AssessmentRubricItem[] }>(capstoneAPI + '/master/rubrics'))
 
 const periodForm = reactive({
   id: '', code: '', name: '', semester: 'GENAP', start_date: '2026-02-01', end_date: '2026-07-31',
@@ -115,7 +116,8 @@ async function saveRubric(id: string) {
 
       <div class="panel workspace-panel cap-list-panel">
         <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Daftar periode akademik</h2></div></div>
-        <div class="workspace-table cap-table-wrap">
+        <WorkspaceSkeleton v-if="periodsStatus === 'pending'" variant="table" :rows="4" label="Memuat periode akademik…" />
+        <div v-else class="workspace-table cap-table-wrap">
           <table class="workspace-table cap-table">
             <thead><tr><th>Kode</th><th>Nama periode</th><th>Rentang</th><th>Status</th><th class="cap-action-heading">Aksi</th></tr></thead>
             <tbody>
@@ -158,7 +160,8 @@ async function saveRubric(id: string) {
       </form>
       <div class="panel workspace-panel cap-list-panel">
         <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Katalog jenis dokumen ({{ docsData?.items.length ?? 0 }})</h2></div></div>
-        <div class="workspace-table cap-table-wrap">
+        <WorkspaceSkeleton v-if="docsStatus === 'pending'" variant="table" :rows="5" label="Memuat katalog jenis dokumen…" />
+        <div v-else class="workspace-table cap-table-wrap">
           <table class="workspace-table cap-table">
             <thead><tr><th>Kode &amp; Nama</th><th>Tahap</th><th>Lingkup</th><th>Status</th><th class="cap-action-heading">Aksi</th></tr></thead>
             <tbody>
@@ -177,36 +180,42 @@ async function saveRubric(id: string) {
 
     <div v-else-if="tab === 'stages'" class="panel workspace-panel cap-list-panel">
       <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Konfigurasi persyaratan tiap tahap</h2></div></div>
-      <div class="cap-panel-items">
-        <form v-for="st in stagesData?.items || []" :key="st.stage" class="cap-panel-item" @submit.prevent="saveStage(st.stage)">
-          <div class="cap-section-heading"><h3>{{ st.stage }} · {{ stageNotes[st.stage]?.label }}</h3><button class="button secondary" :disabled="busy">Simpan aturan</button></div>
-          <div class="field-row3">
-            <div class="field"><label>Min anggota</label><input v-model.number="stageNotes[st.stage]!.min_group_members" type="number" min="1" max="5"></div>
-            <div class="field"><label>Max anggota</label><input v-model.number="stageNotes[st.stage]!.max_group_members" type="number" min="2" max="10"></div>
-            <div class="field"><label>Minimal SKS lulus</label><input v-model.number="stageNotes[st.stage]!.min_sks" type="number" min="0" max="200"></div>
-          </div>
-          <div class="field-row3">
-            <div class="field"><label>Nilai minimal</label><input v-model="stageNotes[st.stage]!.min_grade" maxlength="5"></div>
-            <div class="field"><label>Min log bimbingan</label><input v-model.number="stageNotes[st.stage]!.min_guidance_logs" type="number" min="0" max="30"></div>
-            <div class="field"><label>Max plagiarisme (%)</label><input v-model.number="stageNotes[st.stage]!.max_plagiarism_pct" type="number" min="1" max="100"></div>
-          </div>
-          <div class="field"><label>Catatan persyaratan</label><textarea v-model="stageNotes[st.stage]!.notes" rows="2" /></div>
-        </form>
+      <WorkspaceSkeleton v-if="stagesStatus === 'pending'" variant="cards" :rows="3" label="Memuat persyaratan tahap…" />
+      <div v-else class="cap-panel-items">
+        <template v-for="st in stagesData?.items || []" :key="st.stage">
+          <form v-if="stageNotes[st.stage]" class="cap-panel-item" @submit.prevent="saveStage(st.stage)">
+            <div class="cap-section-heading"><h3>{{ st.stage }} · {{ stageNotes[st.stage]?.label }}</h3><button class="button secondary" :disabled="busy">Simpan aturan</button></div>
+            <div class="field-row3">
+              <div class="field"><label>Min anggota</label><input v-model.number="stageNotes[st.stage]!.min_group_members" type="number" min="1" max="5"></div>
+              <div class="field"><label>Max anggota</label><input v-model.number="stageNotes[st.stage]!.max_group_members" type="number" min="2" max="10"></div>
+              <div class="field"><label>Minimal SKS lulus</label><input v-model.number="stageNotes[st.stage]!.min_sks" type="number" min="0" max="200"></div>
+            </div>
+            <div class="field-row3">
+              <div class="field"><label>Nilai minimal</label><input v-model="stageNotes[st.stage]!.min_grade" maxlength="5"></div>
+              <div class="field"><label>Min log bimbingan</label><input v-model.number="stageNotes[st.stage]!.min_guidance_logs" type="number" min="0" max="30"></div>
+              <div class="field"><label>Max plagiarisme (%)</label><input v-model.number="stageNotes[st.stage]!.max_plagiarism_pct" type="number" min="1" max="100"></div>
+            </div>
+            <div class="field"><label>Catatan persyaratan</label><textarea v-model="stageNotes[st.stage]!.notes" rows="2" /></div>
+          </form>
+        </template>
       </div>
     </div>
 
     <div v-else class="panel workspace-panel cap-list-panel">
       <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Rubrik penilaian CPMK &amp; IK</h2></div></div>
-      <div class="workspace-table cap-table-wrap">
+      <WorkspaceSkeleton v-if="rubricsStatus === 'pending'" variant="table" :rows="5" label="Memuat rubrik CPMK & IK…" />
+      <div v-else class="workspace-table cap-table-wrap">
         <table class="workspace-table cap-table">
           <thead><tr><th>Tahap &amp; IK</th><th>Deskripsi Indikator Kinerja</th><th>Bobot (%)</th><th class="cap-action-heading">Simpan</th></tr></thead>
           <tbody>
-            <tr v-for="r in rubricsData?.items || []" :key="r.id">
-              <td><strong>{{ r.stage === 'PROYEK_AKHIR_1' ? 'PA I (Sempro)' : 'PA II (Ujian Akhir)' }}</strong><small>{{ r.cpmk_code }} · {{ r.ik_code }}</small></td>
-              <td><input v-model="rubricDrafts[r.id]!.ik_description" maxlength="1000"></td>
-              <td><input v-model.number="rubricDrafts[r.id]!.weight" type="number" step="0.25" min="0.5" max="100" style="width:90px"></td>
-              <td class="cap-row-actions"><button type="button" class="workspace-text-action" :disabled="busy" @click="saveRubric(r.id)">Simpan</button></td>
-            </tr>
+            <template v-for="r in rubricsData?.items || []" :key="r.id">
+              <tr v-if="rubricDrafts[r.id]">
+                <td><strong>{{ r.stage === 'PROYEK_AKHIR_1' ? 'PA I (Sempro)' : 'PA II (Ujian Akhir)' }}</strong><small>{{ r.cpmk_code }} · {{ r.ik_code }}</small></td>
+                <td><input v-model="rubricDrafts[r.id]!.ik_description" maxlength="1000"></td>
+                <td><input v-model.number="rubricDrafts[r.id]!.weight" type="number" step="0.25" min="0.5" max="100" style="width:90px"></td>
+                <td class="cap-row-actions"><button type="button" class="workspace-text-action" :disabled="busy" @click="saveRubric(r.id)">Simpan</button></td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>

@@ -2,6 +2,7 @@
 import WorkspaceDatePicker from '~/components/workspace/WorkspaceDatePicker.vue'
 import PersonPicker from './PersonPicker.vue'
 import StatusLabel from './StatusLabel.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
 import type { TopicSeminar } from '../types'
 import { dateTime } from '~/utils/format'
@@ -14,7 +15,7 @@ const isTU = computed(() => api.user.value?.roles.includes('TU') ?? false)
 const isLecturer = computed(() => api.user.value?.roles.includes('DOSEN') ?? false)
 const fetcher = useRequestFetch()
 
-const { data, status, error: loadError, refresh } = await useAsyncData(
+const { data, status, error: loadError, refresh } = await useLazyAsyncData(
   () => 'topic-seminars-' + (props.projectId || 'all'),
   () => fetcher<{ items: TopicSeminar[] }>(capstoneAPI + '/topic-seminars', { query: props.projectId ? { project_id: props.projectId } : {} }),
 )
@@ -87,7 +88,7 @@ async function decide(item: TopicSeminar, decision: string) {
 
     <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
     <p v-if="message" class="notice success cap-panel-feedback" role="status">{{ message }}</p>
-    <p v-if="status === 'pending'" class="cap-loading" role="status">Memuat seminar topik…</p>
+    <WorkspaceSkeleton v-if="status === 'pending'" variant="cards" :rows="2" label="Memuat seminar topik…" />
     <div v-else-if="loadError" class="empty-state">
       <h3>Data seminar topik belum dapat dimuat</h3>
       <button class="button secondary" @click="refresh()">Coba lagi</button>

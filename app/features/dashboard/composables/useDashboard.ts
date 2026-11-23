@@ -35,9 +35,9 @@ export const dashboardDefinitions: Record<DashboardScope, { title: string; descr
 export function useDashboard() {
   const auth = useAuth()
   const fetcher = useRequestFetch()
-  const summary = useAsyncData('dashboard-summary', () => fetcher<DashboardData>(capstoneAPI + '/dashboard'))
+  const summary = useLazyAsyncData('dashboard-summary', () => fetcher<DashboardData>(capstoneAPI + '/dashboard'))
   const admin = computed(() => !!auth.user.value?.roles.includes('ADMIN'))
-  const users = useAsyncData('dashboard-user-stats', () => fetcher<UserStats>('/api/v1/users/stats'), { immediate: admin.value })
+  const users = useLazyAsyncData('dashboard-user-stats', () => fetcher<UserStats>('/api/v1/users/stats'), { immediate: admin.value })
   const definition = computed(() => summary.data.value ? dashboardDefinitions[summary.data.value.scope] : null)
 
   const metrics = computed<DashboardMetric[]>(() => {

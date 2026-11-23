@@ -71,6 +71,10 @@ watch(
   },
 )
 
+watch(() => route.path, (nextPath) => {
+  displayedRoutePath.value = nextPath
+})
+
 nuxtApp.hook('page:finish', () => {
   displayedRoutePath.value = route.path
 })

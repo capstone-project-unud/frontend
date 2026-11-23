@@ -11,6 +11,7 @@ defineEmits<{ logout: [] }>()
 
 const auth = useAuth()
 const { isDark, toggle } = useTheme()
+const { isLoading: navLoading } = useLoadingIndicator()
 const route = useRoute()
 const pageMeta = computed(() => route.meta as typeof route.meta & { workspaceTitle?: string })
 const dashboardScope = computed<DashboardScope | null>(() => {
@@ -18,6 +19,7 @@ const dashboardScope = computed<DashboardScope | null>(() => {
   if (roles.includes('ADMIN')) return 'admin'
   if (roles.includes('KOORDINATOR_TA')) return 'coordinator'
   if (roles.includes('TU')) return 'tu'
+  if (roles.includes('KOPRODI')) return 'koprodi'
   if (roles.includes('DOSEN')) return 'lecturer'
   if (roles.includes('MAHASISWA')) return 'student'
   return null
@@ -45,6 +47,7 @@ function closeProfileMenuAndFocus() {
   <header class="workspace-topbar" :class="{ 'has-heading': !!title }">
     <div v-if="title" class="topbar-heading">
       <h1 id="workspace-page-title">{{ title }}</h1>
+      <span v-if="navLoading" class="topbar-spinner" role="status" aria-label="Memuat halaman" title="Memuat halaman" />
     </div>
     <div class="topbar-actions">
       <button class="topbar-action theme-action" type="button" :aria-label="isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'" :title="isDark ? 'Mode terang' : 'Mode gelap'" @click="toggle">
@@ -80,7 +83,10 @@ function closeProfileMenuAndFocus() {
 <style scoped>
 .workspace-topbar { position: sticky; top: var(--shell-top, 1rem); z-index: 30; display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 clamp(.75rem, 1.5cqi, 1.25rem); padding: clamp(.25rem, .75cqi, .5rem) clamp(.5rem, 1.25cqi, 1rem); gap: clamp(.5rem, 1.25cqi, 1rem); border: 1px solid var(--border); border-radius: clamp(.625rem, 1.2cqi, .875rem); background: var(--panel); box-shadow: var(--shadow-panel); }
 .workspace-topbar.has-heading { min-width: 0; }
-.topbar-heading { min-width: 0; }
+.topbar-heading { min-width: 0; display: flex; align-items: center; gap: .625rem; }
+.topbar-spinner { width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: topbar-spin .65s linear infinite; flex-shrink: 0; }
+@keyframes topbar-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .topbar-spinner { animation: none; } }
 .topbar-heading h1 { font-size: clamp(1.125rem, 1.9cqi, 1.625rem); font-weight: 600; letter-spacing: -.035em; line-height: 1.15; overflow-wrap: anywhere; }
 .topbar-actions { display: flex; align-items: center; gap: clamp(.25rem, .6cqi, .375rem); flex: 0 0 auto; }
 .topbar-action,.profile-menu summary { display: inline-flex; align-items: center; justify-content: center; gap: .5em; min-width: 2.75rem; min-height: 2.75rem; padding: .35em .625em; border: 1px solid var(--border); border-radius: .625rem; background: var(--panel); color: var(--ink); font-size: clamp(.8125rem, 1cqi, .875rem); font-weight: 600; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }

@@ -2,6 +2,14 @@ import { useAuth } from '~/features/auth/composables/useAuth'
 import { apiMessage } from '~/utils/format'
 
 export const capstoneAPI = '/api/v1/capstone'
+
+export function useCachedReference<T>(key: string, path: string) {
+ const fetcher = useRequestFetch()
+ return useLazyAsyncData<T>(key, () => fetcher<T>(capstoneAPI + path), {
+  getCachedData: (k, nuxtApp) => nuxtApp.payload.data[k] ?? nuxtApp.static.data[k],
+ })
+}
+
 export function useCapstone() {
  const auth = useAuth()
  const roles = computed(() => auth.user.value?.roles || [])

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import type { Guidance, Project } from '../types'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
 import GuidanceForm from './GuidanceForm.vue'
@@ -8,8 +9,8 @@ const api = useCapstone()
 const { student, busy, error, message } = api
 const fetcher = useRequestFetch()
 const studentFilter = shallowRef('')
-const { data, status, error: loadError, refresh } = await useAsyncData('guidance-list', () => fetcher<{ items: Guidance[] }>(capstoneAPI + '/guidance', { query: { student_id: studentFilter.value } }), { watch: [studentFilter] })
-const { data: projects } = await useAsyncData('guidance-projects', () => fetcher<{ items: Project[] }>(capstoneAPI + '/projects', { query: { status: 'FINALIZED' } }))
+const { data, status, error: loadError, refresh } = await useLazyAsyncData('guidance-list', () => fetcher<{ items: Guidance[] }>(capstoneAPI + '/guidance', { query: { student_id: studentFilter.value } }), { watch: [studentFilter] })
+const { data: projects } = await useLazyAsyncData('guidance-projects', () => fetcher<{ items: Project[] }>(capstoneAPI + '/projects', { query: { status: 'FINALIZED' } }))
 const showingForm = shallowRef(false), selected = shallowRef<Guidance | null>(null)
 const notes = reactive<Record<string, string>>({})
 const allStudents = shallowRef<{ id: string; name: string }[]>([])
@@ -35,7 +36,7 @@ function print(id?: string) { return api.download('/guidance/export?' + new URLS
    <p v-if="student && !projects?.items.length" class="notice cap-panel-feedback">Log dapat dicatat setelah judul dan pembimbing ditetapkan.</p>
    <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
    <p v-if="message" class="notice success cap-panel-feedback" role="status">{{ message }}</p>
-   <p v-if="status === 'pending'" role="status" class="cap-loading">Memuat log bimbingan…</p>
+   <WorkspaceSkeleton v-if="status === 'pending'" variant="cards" :rows="3" label="Memuat log bimbingan…" />
    <div v-else-if="loadError" class="empty-state"><h2>Log belum dapat dimuat</h2><p>Periksa koneksi lalu coba kembali.</p><button class="button secondary" @click="refresh()">Coba lagi</button></div>
    <div v-else-if="!data?.items.length" class="empty-state"><h2>Belum ada log bimbingan</h2><p>Catatan pertemuan dan hasil pemeriksaan akan ditampilkan di sini.</p></div>
    <div v-else class="cap-panel-items">

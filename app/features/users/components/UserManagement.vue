@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceStatistics from '~/components/workspace/WorkspaceStatistics.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import { useUsers } from '../composables/useUsers'
 import UserFilters from './UserFilters.vue'
 import UserTable from './UserTable.vue'
@@ -266,9 +267,7 @@ async function changeStatus() {
 
       <UserFilters :query="params" @change="users.filters" />
 
-      <div v-if="listStatus === 'pending'" class="empty-state" role="status">
-        <p>Memuat daftar pengguna…</p>
-      </div>
+      <WorkspaceSkeleton v-if="listStatus === 'pending'" variant="table" :rows="5" label="Memuat daftar pengguna…" />
 
       <div v-else-if="listError" class="empty-state">
         <h3>Daftar belum dapat dimuat</h3>

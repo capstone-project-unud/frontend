@@ -15,8 +15,8 @@ export function useUsers() {
     admission_year: year.value ? String(year.value) : '',
     page: page.value,
   }))
-  const list = useAsyncData('user-list', () => api<UserList>('/api/v1/users', { query: params.value }), { watch: [params] })
-  const stats = useAsyncData('user-stats', () => api<UserStats>('/api/v1/users/stats'))
+  const list = useLazyAsyncData('user-list', () => api<UserList>('/api/v1/users', { query: params.value }), { watch: [params] })
+  const stats = useLazyAsyncData('user-stats', () => api<UserStats>('/api/v1/users/stats'))
   const saving = shallowRef(false)
   const mutationError = shallowRef('')
   const message = shallowRef('')

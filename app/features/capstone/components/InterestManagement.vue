@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Interest } from '../types'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 const api = useCapstone()
 const { busy, error, message } = api
 const fetcher = useRequestFetch()
-const { data, status, error: loadError, refresh } = await useAsyncData('capstone-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
+const { data, status, error: loadError, refresh } = await useLazyAsyncData('capstone-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
 const name = shallowRef(''), selected = shallowRef<Interest | null>(null)
 const dialog = useTemplateRef<HTMLDialogElement>('editor')
 const editing = shallowRef(false)
@@ -35,7 +36,7 @@ async function toggle(i: Interest) { if (await api.mutate('/interests/' + i.id, 
         <div class="workspace-panel-title"><h2>Daftar bidang minat</h2><span>{{ data?.items.length ?? '—' }} bidang minat</span></div>
         <div class="workspace-panel-actions"><button class="button primary" @click="open()"><span aria-hidden="true" class="cap-plus">+</span> Tambah bidang minat</button></div>
       </div>
-      <div v-if="status === 'pending'" role="status" class="empty-state"><p>Memuat bidang minat…</p></div>
+      <WorkspaceSkeleton v-if="status === 'pending'" variant="table" :rows="4" label="Memuat bidang minat…" />
       <div v-else-if="loadError" class="empty-state"><h3>Daftar belum dapat dimuat</h3><p>Periksa koneksi lalu coba kembali.</p><button class="button secondary" @click="refresh()">Coba lagi</button></div>
       <div v-else-if="!data?.items.length" class="empty-state"><h3>Belum ada bidang minat</h3><p>Tambahkan bidang minat resmi program studi untuk formulir pendaftaran.</p></div>
       <div v-else class="workspace-table cap-table-wrap" tabindex="0" aria-label="Daftar bidang minat">

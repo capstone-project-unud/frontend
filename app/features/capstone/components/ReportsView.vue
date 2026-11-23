@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
-import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
+import { capstoneAPI, useCachedReference, useCapstone } from '../composables/useCapstone'
 import type { AcademicPeriod, Interest, MonitoringReport } from '../types'
 
 const api = useCapstone()
@@ -12,10 +13,10 @@ const periodId = shallowRef('')
 const interestId = shallowRef('')
 const statusFilter = shallowRef('')
 
-const { data: periods } = await useAsyncData('report-periods', () => fetcher<{ items: AcademicPeriod[] }>(capstoneAPI + '/master/periods'))
-const { data: interests } = await useAsyncData('report-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
+const { data: periods } = await useCachedReference<{ items: AcademicPeriod[] }>('master-periods', '/master/periods')
+const { data: interests } = await useCachedReference<{ items: Interest[] }>('capstone-interests', '/interests')
 
-const { data, status, error: loadError, refresh } = await useAsyncData(
+const { data, status, error: loadError, refresh } = await useLazyAsyncData(
   'monitoring-report',
   () => fetcher<MonitoringReport>(capstoneAPI + '/monitoring/report', {
     query: { type: reportType.value, period_id: periodId.value, interest_id: interestId.value, status: statusFilter.value },
@@ -65,7 +66,7 @@ function exportReport(format: 'xlsx' | 'pdf') {
       </div>
 
       <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
-      <p v-if="status === 'pending'" class="cap-loading" role="status">Menyiapkan rekap laporan…</p>
+      <WorkspaceSkeleton v-if="status === 'pending'" variant="table" :rows="5" label="Menyiapkan rekap laporan…" />
       <div v-else-if="loadError" class="empty-state">
         <h2>Laporan belum dapat dimuat</h2>
         <button class="button secondary" @click="refresh()">Coba lagi</button>

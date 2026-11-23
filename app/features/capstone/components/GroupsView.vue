@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
 import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import PersonPicker from './PersonPicker.vue'
 import StatusLabel from './StatusLabel.vue'
-import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import { capstoneAPI, useCachedReference, useCapstone } from '../composables/useCapstone'
 import type { AcademicPeriod, CapstoneGroup, Interest, MemberInput } from '../types'
 import { dateTime } from '~/utils/format'
 
@@ -13,15 +14,15 @@ const fetcher = useRequestFetch()
 const periodFilter = shallowRef('')
 const statusFilter = shallowRef('')
 
-const { data, status, error: loadError, refresh } = await useAsyncData(
+const { data, status, error: loadError, refresh } = await useLazyAsyncData(
   'capstone-groups',
   () => fetcher<{ items: CapstoneGroup[] }>(capstoneAPI + '/groups', {
     query: { academic_period_id: periodFilter.value, status: statusFilter.value },
   }),
   { watch: [periodFilter, statusFilter] },
 )
-const { data: periods } = await useAsyncData('master-periods-groups', () => fetcher<{ items: AcademicPeriod[] }>(capstoneAPI + '/master/periods'))
-const { data: interests } = await useAsyncData('capstone-interests-groups', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
+const { data: periods } = await useCachedReference<{ items: AcademicPeriod[] }>('master-periods', '/master/periods')
+const { data: interests } = await useCachedReference<{ items: Interest[] }>('capstone-interests', '/interests')
 
 const editingGroup = shallowRef<CapstoneGroup | null>(null)
 const showForm = shallowRef(false)
@@ -224,7 +225,7 @@ function groupAdvisorsForMember(g: CapstoneGroup, studentId: string): { p1: stri
 
       <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
       <p v-if="message" class="notice success cap-panel-feedback" role="status">{{ message }}</p>
-      <p v-if="status === 'pending'" class="cap-loading" role="status">Memuat kelompok…</p>
+      <WorkspaceSkeleton v-if="status === 'pending'" variant="cards" :rows="3" label="Memuat kelompok capstone…" />
       <div v-else-if="loadError" class="empty-state">
         <h2>Data kelompok belum dapat dimuat</h2>
         <p>Periksa koneksi lalu coba kembali.</p>

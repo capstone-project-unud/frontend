@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import WorkspaceDatePicker from '~/components/workspace/WorkspaceDatePicker.vue'
 import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import FileUpload from './FileUpload.vue'
 import PersonPicker from './PersonPicker.vue'
 import RevisionTrackerPanel from './RevisionTrackerPanel.vue'
@@ -18,7 +19,7 @@ const isTU = computed(() => api.user.value?.roles.includes('TU') ?? false)
 const isLecturer = computed(() => api.user.value?.roles.includes('DOSEN') ?? false)
 const fetcher = useRequestFetch()
 
-const { data, status, error: loadError, refresh } = await useAsyncData(
+const { data, status, error: loadError, refresh } = await useLazyAsyncData(
   'final-exam-list',
   () => fetcher<{ items: FinalExamItem[] }>(capstoneAPI + '/final-exam'),
 )
@@ -239,7 +240,7 @@ async function decideExam(item: FinalExamItem, nextStatus: 'PASSED' | 'REVISION'
 
       <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
       <p v-if="message" class="notice success cap-panel-feedback" role="status">{{ message }}</p>
-      <p v-if="status === 'pending'" class="cap-loading" role="status">Memuat Ujian Akhir…</p>
+      <WorkspaceSkeleton v-if="status === 'pending'" variant="cards" :rows="3" label="Memuat data Ujian Akhir…" />
       <div v-else-if="loadError" class="empty-state">
         <h2>Data Ujian Akhir belum dapat dimuat</h2>
         <button class="button secondary" @click="refresh()">Coba lagi</button>

@@ -8,6 +8,7 @@ import DashboardProjects from './DashboardProjects.vue'
 import DashboardStudentGroup from './DashboardStudentGroup.vue'
 import DashboardStudentProgress from './DashboardStudentProgress.vue'
 import DashboardTasks from './DashboardTasks.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 
 const auth = useAuth()
 const dashboard = useDashboard()
@@ -45,10 +46,7 @@ const primary = computed(() => {
 
 <template>
   <section class="dashboard-page">
-    <div v-if="status === 'pending'" class="panel workspace-panel cap-list-panel">
-      <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Ringkasan dashboard</h2></div></div>
-      <p role="status" class="cap-loading">Memuat ringkasan…</p>
-    </div>
+    <WorkspaceSkeleton v-if="status === 'pending'" variant="dashboard" label="Memuat ringkasan dashboard…" />
     <div v-else-if="error" class="panel workspace-panel cap-list-panel" role="alert">
       <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Ringkasan dashboard</h2></div></div>
       <div class="empty-state">
@@ -72,7 +70,7 @@ const primary = computed(() => {
           <div v-else-if="users" class="dashboard-account-metrics">
             <DashboardMetrics :items="userMetrics" label="Statistik akun" />
           </div>
-          <p v-else role="status" class="cap-loading">Memuat statistik akun…</p>
+          <WorkspaceSkeleton v-else variant="spinner" label="Memuat statistik akun…" />
         </section>
 
         <div v-if="users" class="chart-grid">

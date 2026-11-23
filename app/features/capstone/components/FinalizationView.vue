@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import WorkspaceSearch from '~/components/workspace/WorkspaceSearch.vue'
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import type { Project, Interest, DirectoryUser } from '../types'
-import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import { capstoneAPI, useCachedReference, useCapstone } from '../composables/useCapstone'
 import { apiMessage } from '~/utils/format'
 import FinalizationRow from './FinalizationRow.vue'
 import StatusLabel from './StatusLabel.vue'
@@ -12,10 +13,11 @@ const fetcher = useRequestFetch()
 const interest = shallowRef(''), state = shallowRef('SUBMITTED'), page = shallowRef(1), lecturerQuery = shallowRef('')
 const query = computed(() => ({ interest_id: interest.value, status: state.value, page: page.value }))
 watch([interest, state], () => { page.value = 1 })
-const { data, status, error: loadError, refresh } = await useAsyncData('finalization-projects', () => fetcher<{ items: Project[]; total: number }>(capstoneAPI + '/projects', { query: query.value }), { watch: [query] })
-const { data: interests } = await useAsyncData('capstone-interests', () => fetcher<{ items: Interest[] }>(capstoneAPI + '/interests'))
-const { data: directory } = await useAsyncData('finalization-lecturers', () => fetcher<{ items: DirectoryUser[] }>(capstoneAPI + '/directory', { query: { role: 'DOSEN' } }))
+const { data, status, error: loadError, refresh } = await useLazyAsyncData('finalization-projects', () => fetcher<{ items: Project[]; total: number }>(capstoneAPI + '/projects', { query: query.value }), { watch: [query] })
+const { data: interests } = await useCachedReference<{ items: Interest[] }>('capstone-interests', '/interests')
+const { data: directory } = await useLazyAsyncData('finalization-lecturers', () => fetcher<{ items: DirectoryUser[] }>(capstoneAPI + '/directory', { query: { role: 'DOSEN' } }))
 const lecturers = shallowRef<DirectoryUser[]>(directory.value?.items || [])
+watch(directory, (val) => { if (val?.items && !lecturerQuery.value) lecturers.value = val.items }, { immediate: true })
 const selected = shallowRef<Project | null>(null)
 const dialog = useTemplateRef<HTMLDialogElement>('confirm')
 async function searchLecturers() { try { const result = await $fetch<{ items: DirectoryUser[] }>(capstoneAPI + '/directory', { query: { role: 'DOSEN', q: lecturerQuery.value } }); lecturers.value = result.items } catch (e) { error.value = apiMessage(e) } }
@@ -36,7 +38,7 @@ function close() { if (!busy.value) { dialog.value?.close(); selected.value = nu
   <form class="workspace-toolbar" role="search" aria-label="Cari dosen untuk penetapan" @submit.prevent="searchLecturers"><WorkspaceSearch id="lecturer-query" v-model="lecturerQuery" label="Cari dosen untuk penetapan" placeholder="Cari nama dosen…" @search="searchLecturers" @clear="searchLecturers" /><span class="muted cap-toolbar-hint">Hasil pencarian menjadi pilihan dosen pada tabel.</span></form>
   <p v-if="error" role="alert" class="notice error cap-panel-feedback">{{ error }}</p>
   <p v-if="message" role="status" class="notice success cap-panel-feedback">{{ message }}</p>
-  <p v-if="status === 'pending'" role="status" class="cap-loading">Memuat judul…</p>
+  <WorkspaceSkeleton v-if="status === 'pending'" variant="cards" :rows="3" label="Memuat daftar finalisasi judul…" />
   <div v-else-if="loadError" class="empty-state"><h2>Daftar belum dapat dimuat</h2><p>Periksa koneksi lalu coba kembali.</p><button class="button secondary" @click="refresh()">Coba lagi</button></div>
   <div v-else-if="!data?.items.length" class="empty-state"><h2>Tidak ada judul untuk ditampilkan</h2><p>Judul yang diajukan mahasiswa akan tersedia untuk rapat finalisasi.</p></div>
   <div v-else class="cap-panel-items">

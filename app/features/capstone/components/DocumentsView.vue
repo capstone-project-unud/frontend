@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import WorkspaceFilter from '~/components/workspace/WorkspaceFilter.vue'
 import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import FileUpload from './FileUpload.vue'
 import StatusLabel from './StatusLabel.vue'
-import { capstoneAPI, useCapstone } from '../composables/useCapstone'
+import { capstoneAPI, useCachedReference, useCapstone } from '../composables/useCapstone'
 import type { DocumentType, Project, ProjectDocument } from '../types'
 import { dateTime } from '~/utils/format'
 
@@ -14,15 +15,15 @@ const fetcher = useRequestFetch()
 const categoryFilter = shallowRef('')
 const stageFilter = shallowRef('')
 
-const { data: docTypesData } = await useAsyncData('master-doc-types', () => fetcher<{ items: DocumentType[] }>(capstoneAPI + '/master/document-types'))
-const { data, status, error: loadError, refresh } = await useAsyncData(
+const { data: docTypesData } = await useCachedReference<{ items: DocumentType[] }>('master-docs', '/master/document-types')
+const { data, status, error: loadError, refresh } = await useLazyAsyncData(
   'project-documents',
   () => fetcher<{ items: ProjectDocument[] }>(capstoneAPI + '/documents', {
     query: { category: categoryFilter.value, stage: stageFilter.value },
   }),
   { watch: [categoryFilter, stageFilter] },
 )
-const { data: myProjects } = await useAsyncData(
+const { data: myProjects } = await useLazyAsyncData(
   'document-projects',
   () => fetcher<{ items: Project[] }>(capstoneAPI + '/projects'),
 )
@@ -208,7 +209,7 @@ async function review(doc: ProjectDocument, nextStatus: 'APPROVED' | 'REVISION')
 
       <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
       <p v-if="message" class="notice success cap-panel-feedback" role="status">{{ message }}</p>
-      <p v-if="status === 'pending'" role="status" class="cap-loading">Memuat dokumen…</p>
+      <WorkspaceSkeleton v-if="status === 'pending'" variant="table" :rows="5" label="Memuat dokumen capstone…" />
       <div v-else-if="loadError" class="empty-state">
         <h2>Dokumen belum dapat dimuat</h2>
         <p>Periksa koneksi lalu coba kembali.</p>

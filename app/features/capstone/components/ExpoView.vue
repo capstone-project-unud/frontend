@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceSelect from '~/components/workspace/WorkspaceSelect.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 import FileUpload from './FileUpload.vue'
 import StatusLabel from './StatusLabel.vue'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
@@ -11,9 +12,9 @@ const isAdmin = computed(() => api.user.value?.roles.includes('ADMIN') ?? false)
 const fetcher = useRequestFetch()
 const tab = shallowRef<'gallery' | 'manage'>('gallery')
 
-const { data: galleryData, refresh: refreshGallery } = await useAsyncData('expo-gallery', () => fetcher<{ items: ExpoSubmission[] }>(capstoneAPI + '/expo', { query: { published: 'true' } }))
-const { data: manageData, status, error: loadError, refresh: refreshManage } = await useAsyncData('expo-manage', () => fetcher<{ items: ExpoSubmission[] }>(capstoneAPI + '/expo'))
-const { data: myProjects } = await useAsyncData('expo-projects', () => fetcher<{ items: Project[] }>(capstoneAPI + '/projects', { query: { status: 'FINALIZED' } }))
+const { data: galleryData, status: galleryStatus, refresh: refreshGallery } = await useLazyAsyncData('expo-gallery', () => fetcher<{ items: ExpoSubmission[] }>(capstoneAPI + '/expo', { query: { published: 'true' } }))
+const { data: manageData, status, error: loadError, refresh: refreshManage } = await useLazyAsyncData('expo-manage', () => fetcher<{ items: ExpoSubmission[] }>(capstoneAPI + '/expo'))
+const { data: myProjects } = await useLazyAsyncData('expo-projects', () => fetcher<{ items: Project[] }>(capstoneAPI + '/projects', { query: { status: 'FINALIZED' } }))
 
 const categoryOptions = [
   { value: 'SOFTWARE', label: 'Aplikasi / Sistem Software' },
@@ -78,7 +79,8 @@ async function reviewExpo(item: ExpoSubmission, nextStatus: 'APPROVED' | 'PUBLIS
           <span>{{ galleryData?.items.length ?? 0 }} karya diterbitkan</span>
         </div>
       </div>
-      <div v-if="!galleryData?.items.length" class="empty-state">
+      <WorkspaceSkeleton v-if="galleryStatus === 'pending'" variant="cards" :rows="3" label="Memuat galeri Capstone Expo…" />
+      <div v-else-if="!galleryData?.items.length" class="empty-state">
         <h2>Belum ada karya Expo yang diterbitkan</h2>
         <p>Karya capstone yang lulus Ujian Akhir dan disetujui Admin untuk publikasi akan tampil pada galeri showcase di sini.</p>
       </div>
@@ -132,7 +134,7 @@ async function reviewExpo(item: ExpoSubmission, nextStatus: 'APPROVED' | 'PUBLIS
         <div class="workspace-panel-header"><div class="workspace-panel-title"><h2>Kurasi &amp; persetujuan publikasi Expo</h2></div></div>
         <p v-if="error" class="notice error cap-panel-feedback" role="alert">{{ error }}</p>
         <p v-if="message" class="notice success cap-panel-feedback" role="status">{{ message }}</p>
-        <p v-if="status === 'pending'" class="cap-loading" role="status">Memuat pengajuan Expo…</p>
+        <WorkspaceSkeleton v-if="status === 'pending'" variant="cards" :rows="3" label="Memuat pengajuan & kurasi Expo…" />
         <div v-else-if="loadError" class="empty-state"><button class="button secondary" @click="refreshManage()">Coba lagi</button></div>
         <div v-else-if="!manageData?.items.length" class="empty-state"><h3>Belum ada pengajuan Expo</h3></div>
         <div v-else class="cap-panel-items">

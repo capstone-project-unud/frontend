@@ -8,6 +8,7 @@ import FileUpload from './FileUpload.vue'
 import SupervisorDecisions from './SupervisorDecisions.vue'
 import TopicSeminarsPanel from './TopicSeminarsPanel.vue'
 import StatusLabel from './StatusLabel.vue'
+import WorkspaceSkeleton from '~/components/workspace/WorkspaceSkeleton.vue'
 
 const props = defineProps<{ id: string }>()
 const api = useCapstone()
@@ -16,8 +17,8 @@ const isTU = computed(() => api.user.value?.roles.includes('TU') ?? false)
 const isAdmin = computed(() => api.user.value?.roles.includes('ADMIN') ?? false)
 const fetcher = useRequestFetch()
 
-const { data, status, error: loadError, refresh } = await useAsyncData('capstone-project-' + props.id, () => fetcher<{ project: Project }>(capstoneAPI + '/projects/' + props.id))
-const { data: history, refresh: refreshHistory } = await useAsyncData('capstone-history-' + props.id, () => fetcher<{ items: { id: number; action: string; created_at: string }[] }>(capstoneAPI + '/projects/' + props.id + '/history'))
+const { data, status, error: loadError, refresh } = await useLazyAsyncData('capstone-project-' + props.id, () => fetcher<{ project: Project }>(capstoneAPI + '/projects/' + props.id))
+const { data: history, refresh: refreshHistory } = await useLazyAsyncData('capstone-history-' + props.id, () => fetcher<{ items: { id: number; action: string; created_at: string }[] }>(capstoneAPI + '/projects/' + props.id + '/history'))
 
 const editing = shallowRef(false)
 const note = shallowRef('')
@@ -69,7 +70,7 @@ async function action(path: string, body: Record<string, unknown> = {}, method: 
 <template>
   <section>
     <NuxtLink to="/capstone" class="cap-link cap-back-link">Kembali ke daftar topik &amp; judul</NuxtLink>
-    <p v-if="status === 'pending'" role="status">Memuat topik &amp; judul…</p>
+    <WorkspaceSkeleton v-if="status === 'pending'" variant="detail" label="Memuat detail topik &amp; judul…" />
     <div v-else-if="loadError" class="notice error" role="alert">
       Judul belum dapat dimuat. <button class="button secondary" @click="refresh()">Coba lagi</button>
     </div>
