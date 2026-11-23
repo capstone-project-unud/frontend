@@ -14,7 +14,7 @@ const navigation = [
   { to: '/groups', label: 'Kelompok', icon: 'group', roles: ['MAHASISWA', 'DOSEN', 'KOORDINATOR_TA', 'ADMIN'] },
   { to: '/capstone', label: 'Topik & Judul', icon: 'projects', roles: [] },
   { to: '/finalization', label: 'Finalisasi Judul', icon: 'sheet', roles: ['KOORDINATOR_TA'] },
-  { to: '/guidance', label: 'Log Bimbingan', icon: 'book', roles: ['MAHASISWA', 'DOSEN', 'KOORDINATOR_TA', 'ADMIN'] },
+  { to: '/guidance', label: 'Log Bimbingan', icon: 'book', roles: ['MAHASISWA', 'DOSEN', 'KOORDINATOR_TA', 'KOPRODI', 'ADMIN'] },
   { to: '/proposal', label: 'Pendaftaran Proposal', icon: 'document', roles: ['MAHASISWA', 'DOSEN', 'TU', 'KOORDINATOR_TA', 'ADMIN', 'KOPRODI'] },
   { to: '/documents', label: 'Dokumen Capstone', icon: 'book', roles: ['MAHASISWA', 'DOSEN', 'KOORDINATOR_TA', 'TU', 'ADMIN'] },
   { to: '/sempro', label: 'Ujian Proposal', icon: 'sheet', roles: ['MAHASISWA', 'DOSEN', 'KOORDINATOR_TA', 'TU', 'ADMIN', 'KOPRODI'] },

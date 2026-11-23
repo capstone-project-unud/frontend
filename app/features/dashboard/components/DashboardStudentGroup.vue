@@ -15,18 +15,28 @@ const myAdvisors = computed(() => {
 function advisorDisplay(slot: number) {
   const rec = myAdvisors.value.find(a => a.slot === slot)
   if (!rec) return { name: 'Belum ditetapkan', pending: true, detail: 'Belum ada calon/pembimbing ditetapkan.' }
+  const mitra = rec.is_external_supervisor && rec.external_supervisor_name
+    ? ` · Mitra: ${rec.external_supervisor_name}${rec.external_supervisor_institution ? ` (${rec.external_supervisor_institution})` : ''}`
+    : ''
   if (rec.supervisor_name) {
     return {
       name: rec.supervisor_name,
       pending: false,
-      detail: `Ditetapkan resmi (${rec.title_status === 'APPROVED' && rec.confirmation_status === 'APPROVED' ? 'Judul & Kesediaan disetujui' : 'Menunggu finalisasi'})`,
+      detail: `Ditetapkan resmi (${rec.title_status === 'APPROVED' && rec.confirmation_status === 'APPROVED' ? 'Judul & Kesediaan disetujui' : 'Menunggu finalisasi'})${mitra}`,
     }
   }
   if (rec.candidate_name) {
     return {
       name: `${rec.candidate_name} (Calon)`,
       pending: true,
-      detail: `Judul: ${rec.title_status} · Kesediaan: ${rec.confirmation_status}`,
+      detail: `Judul: ${rec.title_status} · Kesediaan: ${rec.confirmation_status}${mitra}`,
+    }
+  }
+  if (mitra) {
+    return {
+      name: rec.external_supervisor_name || 'Pembimbing mitra',
+      pending: false,
+      detail: rec.external_supervisor_institution || 'Pembimbing eksternal / mitra',
     }
   }
   return { name: 'Belum dipilih', pending: true, detail: 'Lengkapi calon pembimbing pada pengajuan topik.' }

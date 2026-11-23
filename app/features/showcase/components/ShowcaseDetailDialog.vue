@@ -65,6 +65,7 @@ watch(() => props.work, async (val) => {
       </div>
 
       <div class="cap-dialog-actions">
+        <a v-if="work.poster_file_id" class="button secondary" :href="`/api/v1/capstone/public/expo/${work.id}/poster`" target="_blank" rel="noopener">Unduh Poster (PDF)</a>
         <a v-if="work.repo_url" class="button secondary" :href="work.repo_url" target="_blank" rel="noopener">Repositori GitHub</a>
         <a v-if="work.video_url" class="button secondary" :href="work.video_url" target="_blank" rel="noopener">Video Demonstrasi</a>
         <a v-if="work.demo_url" class="button primary" :href="work.demo_url" target="_blank" rel="noopener">Buka Demo Produk</a>

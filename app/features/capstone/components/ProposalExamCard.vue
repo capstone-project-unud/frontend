@@ -4,6 +4,7 @@ import { panelLabels } from '../proposal'
 import { capstoneAPI, useCapstone } from '../composables/useCapstone'
 import { dateTime } from '~/utils/format'
 import ProposalExamAssessment from './ProposalExamAssessment.vue'
+import RevisionTrackerPanel from './RevisionTrackerPanel.vue'
 const props = defineProps<{ exam: ProposalExam; policy: PublishedPolicy | null }>()
 const emit = defineEmits<{ saved: [] }>()
 const api = useCapstone()
@@ -26,5 +27,6 @@ function report(kind: string, id?: string) { return capstoneAPI + '/proposal-exa
   <form v-if="panelMember && !attended" class="cap-section" @submit.prevent="attend"><label class="check-field"><input v-model="confirm" type="checkbox" required :disabled="busy"> Saya hadir pada ujian ini dan menyetujui penggunaan tanda tangan saya pada presensi.</label><div><button class="button secondary" :disabled="busy || !confirm">Konfirmasi kehadiran saya</button></div></form>
   <p v-if="panelMember" class="muted">Template tanda tangan dapat diunggah pada <NuxtLink to="/account">profil Anda</NuxtLink>.</p><p v-if="error" class="notice error" role="alert">{{ error }}</p>
   <ProposalExamAssessment v-if="assessment && panelMember" :key="exam.id + ':' + (exam.evaluations.find(e => e.evaluator_id === me)?.version || 0)" :exam="exam" :evaluator-id="me" :policy="policy" @saved="emit('saved')" />
+  <RevisionTrackerPanel stage="SEMPRO" :seminar-id="exam.id" :project-id="exam.project_id" :seminar-version="exam.version" :approved-file-id="exam.revision_approved_file_id" :items="exam.revision_items || []" :is-examiner="panelMember" :endorse-endpoint="'/proposal-exams/' + exam.id + '/revision-approval'" @changed="emit('saved')" />
  </article>
 </template>

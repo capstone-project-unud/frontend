@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  save: [payload: { student_id: string; scores: Record<string, number>; recommendation: string; notes: string }]
+  save: [payload: { student_id: string; scores: Record<string, number>; recommendation: string; notes: string; confirm_signature?: boolean }]
   close: []
 }>()
 
@@ -50,6 +50,7 @@ const defaultRec = computed(() => props.mode === 'FINAL_EXAM' ? 'PASSED' : 'APPR
 const selectedStudent = shallowRef(distinctStudents.value[0]?.student_id || '')
 const recommendation = shallowRef<string>(defaultRec.value)
 const notes = shallowRef('')
+const confirmSignature = shallowRef(false)
 const scores = reactive<Record<string, number>>({})
 
 function loadStudentEvaluation(studentID: string) {
@@ -102,6 +103,7 @@ function submit() {
     scores: normalized,
     recommendation: recommendation.value,
     notes: notes.value,
+    ...(props.mode === 'FINAL_EXAM' ? { confirm_signature: confirmSignature.value } : {}),
   })
 }
 </script>
@@ -146,6 +148,11 @@ function submit() {
           <label for="eval-notes">Catatan penilaian <span v-if="recommendation === 'APPROVED' || recommendation === 'PASSED'" class="optional">(opsional)</span></label>
           <textarea id="eval-notes" v-model="notes" maxlength="2000" rows="2" :required="recommendation !== 'APPROVED' && recommendation !== 'PASSED'" placeholder="Masukan substansi atau perbaikan untuk mahasiswa ini" />
         </div>
+
+        <label v-if="mode === 'FINAL_EXAM'" class="check-field">
+          <input v-model="confirmSignature" type="checkbox">
+          <span>Sertakan template tanda tangan saya pada Berita Acara Ujian Akhir (opsional — unggah di Profil).</span>
+        </label>
       </fieldset>
 
       <p v-if="error" class="notice error" role="alert">{{ error }}</p>

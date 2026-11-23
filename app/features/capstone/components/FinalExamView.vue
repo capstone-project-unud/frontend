@@ -150,7 +150,7 @@ function isExaminer(item: FinalExamItem) {
   const uid = api.user.value?.id
   return !!uid && !!item.exam && [item.exam.examiner_1_id, item.exam.examiner_2_id, item.exam.examiner_3_id].includes(uid)
 }
-async function saveEval(payload: { student_id: string; scores: Record<string, number>; recommendation: string; notes: string }) {
+async function saveEval(payload: { student_id: string; scores: Record<string, number>; recommendation: string; notes: string; confirm_signature?: boolean }) {
   if (!evaluatingItem.value?.exam) return
   rubricSaved.value = ''
   if (await api.mutate(`/final-exam/${evaluatingItem.value.exam.id}/evaluate`, payload, 'PUT')) {
@@ -158,6 +158,18 @@ async function saveEval(payload: { student_id: string; scores: Record<string, nu
     await refresh()
     const updated = data.value?.items.find(i => i.project_id === evaluatingItem.value?.project_id)
     if (updated) evaluatingItem.value = updated
+  }
+}
+const confirmAtt = reactive<Record<string, boolean>>({})
+function attendedFinal(item: FinalExamItem) {
+  const uid = api.user.value?.id
+  return !!uid && !!item.exam?.attendance?.some(a => a.lecturer_id === uid)
+}
+async function attendFinal(examID: string) {
+  if (!confirmAtt[examID]) return
+  if (await api.mutate(`/final-exam/${examID}/attendance`, { confirm_signature: true })) {
+    confirmAtt[examID] = false
+    await refresh()
   }
 }
 async function decideExam(item: FinalExamItem, nextStatus: 'PASSED' | 'REVISION' | 'FAILED') {
@@ -313,8 +325,16 @@ async function decideExam(item: FinalExamItem, nextStatus: 'PASSED' | 'REVISION'
             </dl>
             <div class="cap-actions">
               <button v-if="canEvaluate(item)" type="button" class="button primary" @click="rubricSaved = ''; evaluatingItem = item">Isi nilai rubrik PA II</button>
+              <button type="button" class="button secondary" :disabled="busy" @click="api.download(`/final-exam/${item.exam.id}/report?kind=attendance`, 'Presensi_Ujian_Akhir.pdf')">Unduh Presensi (PDF)</button>
               <button type="button" class="button secondary" :disabled="busy" @click="api.download(`/final-exam/${item.exam.id}/report`, 'Berita_Acara_Ujian_Akhir.pdf')">Unduh Berita Acara (PDF)</button>
             </div>
+            <form v-if="canEvaluate(item) && !attendedFinal(item)" class="cap-review" @submit.prevent="attendFinal(item.exam.id)">
+              <label class="check-field">
+                <input v-model="confirmAtt[item.exam.id]" type="checkbox" required :disabled="busy">
+                <span>Saya hadir pada Ujian Akhir ini dan menyetujui penggunaan template tanda tangan saya pada Presensi (unggah di <NuxtLink to="/account">Profil</NuxtLink>).</span>
+              </label>
+              <div><button type="submit" class="button secondary" :disabled="busy || !confirmAtt[item.exam.id]">Konfirmasi kehadiran saya</button></div>
+            </form>
 
             <div v-if="item.exam.student_summaries.length" class="cap-table-wrap">
               <table class="cap-table">

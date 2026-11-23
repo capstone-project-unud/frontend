@@ -17,4 +17,5 @@ export interface ProposalExam {
  scheduled_at: string; location: string; version: number; panel: { id: string; name: string; role: string }[]
  policy_id: string | null; policy: ProposalPolicy | null; evaluations: ExamEvaluation[]
  attendance: { lecturer_id: string; confirmed_at: string }[]; final_score: number | null; letter: string; category: string; outcome: string
+ revision_approved_file_id?: string | null; revision_items?: import('./types').RevisionItem[]
 }

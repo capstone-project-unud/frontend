@@ -32,6 +32,9 @@ export interface GroupAdvisorBrief {
   student_id: string; student_name: string; slot: number
   candidate_id: string | null; candidate_name: string
   supervisor_id: string | null; supervisor_name: string
+  is_external_supervisor?: boolean
+  external_supervisor_name?: string
+  external_supervisor_institution?: string
   title_status: string; confirmation_status: string
 }
 
@@ -48,6 +51,8 @@ export interface Participant {
   student_id: string; student_name: string; nim: string; is_leader?: boolean; responsibility?: string; slot: number
   candidate_id: string | null; candidate_name: string; supervisor_id: string | null; supervisor_name: string
   is_external_supervisor?: boolean
+  external_supervisor_name?: string
+  external_supervisor_institution?: string
   title_status: string; confirmation_status: string; note: string
   title_actor: string | null; title_at: string | null; confirmation_actor: string | null; confirmation_at: string | null
 }
@@ -64,6 +69,9 @@ export interface Project {
 export interface MemberInput {
   student_id: string; is_leader?: boolean; responsibility?: string
   candidate_1: string | null; candidate_2: string | null
+  is_external_supervisor?: boolean
+  external_supervisor_name?: string
+  external_supervisor_institution?: string
 }
 
 export interface ProjectInput {
@@ -95,6 +103,7 @@ export interface Proposal {
   simak_note: string; approval_note: string; simak_reviewed_at: string | null
   approval_reviewed_at: string | null; version: number; submitted_at: string; ready: boolean
   interest_id: string; interest_name: string; supervisor_1_name: string; supervisor_2_name: string
+  guidance_approved_count?: number; supervisor_count?: number
   documents: import('./proposal').ProposalDocument[]
 }
 
@@ -182,6 +191,7 @@ export interface FinalExam {
   status: string; outcome_note: string; minutes_file_id: string | null; revision_approved_file_id: string | null
   schedule_history: Record<string, unknown>[]; decided_at: string | null; version: number
   evaluations: SemproEvaluation[]; student_summaries: StudentScoreBrief[]; revision_items: RevisionItem[]
+  attendance?: { lecturer_id: string; confirmed_at: string }[]
 }
 
 export interface FinalExamItem {

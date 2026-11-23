@@ -10,6 +10,14 @@ import { useAuth } from '~/features/auth/composables/useAuth'
 const auth = useAuth()
 const theme = useTheme()
 
+const { data: liveExpoData } = useFetch<{ items: ShowcaseWork[] }>('/api/v1/capstone/public/expo', {
+  default: () => ({ items: [] }),
+})
+
+const publishedWorks = computed(() => liveExpoData.value?.items || [])
+const usingLiveExpo = computed(() => publishedWorks.value.length > 0)
+const catalogWorks = computed<ShowcaseWork[]>(() => (usingLiveExpo.value ? publishedWorks.value : MOCK_EXPO_WORKS))
+
 onMounted(() => {
   if (!auth.initialized.value) {
     auth.load().catch(() => {})
@@ -97,7 +105,7 @@ const interestOptions = computed(() => [
 ])
 
 const periodOptions = computed(() => {
-  const uniquePeriods = Array.from(new Set(MOCK_EXPO_WORKS.map(w => w.academic_period_name))).sort().reverse()
+  const uniquePeriods = Array.from(new Set(catalogWorks.value.map(w => w.academic_period_name))).sort().reverse()
   return [
     { value: '', label: 'Semua Periode' },
     ...uniquePeriods.map(period => ({ value: period, label: period })),
@@ -106,7 +114,7 @@ const periodOptions = computed(() => {
 
 const filteredWorks = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  return MOCK_EXPO_WORKS.filter((work) => {
+  return catalogWorks.value.filter((work) => {
     if (selectedCategory.value && work.category !== selectedCategory.value) return false
     if (selectedInterest.value && work.interest_name !== selectedInterest.value) return false
     if (selectedPeriod.value && work.academic_period_name !== selectedPeriod.value) return false
@@ -132,13 +140,13 @@ const hasActiveFilters = computed(() =>
 
 const interestCounts = computed<Record<string, number>>(() => {
   const counts: Record<string, number> = {}
-  for (const work of MOCK_EXPO_WORKS) {
+  for (const work of catalogWorks.value) {
     counts[work.interest_name] = (counts[work.interest_name] || 0) + 1
   }
   return counts
 })
 
-const featuredWork = MOCK_EXPO_WORKS[0]!
+const featuredWork = computed(() => catalogWorks.value[0] || MOCK_EXPO_WORKS[0]!)
 
 function resetFilters() {
   searchQuery.value = ''
@@ -252,8 +260,8 @@ function focusGalleryWithInterest(interestName: string) {
             <dd>4</dd>
           </div>
           <div class="workspace-stat">
-            <dt>Karya Contoh (Pra-API)</dt>
-            <dd>{{ MOCK_EXPO_WORKS.length }}</dd>
+            <dt>{{ usingLiveExpo ? 'Karya Terpublikasi' : 'Karya Contoh (Pra-API)' }}</dt>
+            <dd>{{ catalogWorks.length }}</dd>
           </div>
           <div class="workspace-stat">
             <dt>Akses Galeri Guest</dt>
@@ -301,7 +309,7 @@ function focusGalleryWithInterest(interestName: string) {
             />
           </div>
           <div class="filter-status-bar">
-            <span class="muted">Menampilkan {{ filteredWorks.length }} dari {{ MOCK_EXPO_WORKS.length }} karya pameran</span>
+            <span class="muted">Menampilkan {{ filteredWorks.length }} dari {{ catalogWorks.length }} karya pameran</span>
             <button v-if="hasActiveFilters" type="button" class="workspace-text-action" @click="resetFilters">
               Reset Filter
             </button>

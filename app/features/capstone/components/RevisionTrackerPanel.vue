@@ -12,6 +12,7 @@ const props = defineProps<{
   approvedFileId?: string | null
   items: RevisionItem[]
   isExaminer: boolean
+  endorseEndpoint?: string
 }>()
 
 const emit = defineEmits<{ changed: [] }>()
@@ -22,6 +23,10 @@ const newNote = shallowRef('')
 const responses = reactive<Record<string, { text: string; fileId: string | null }>>({})
 const reviewNotes = reactive<Record<string, string>>({})
 const endorsedFileId = shallowRef<string | null>(props.approvedFileId || null)
+
+watch(() => props.approvedFileId, (val) => {
+  endorsedFileId.value = val || null
+})
 
 watch(() => props.items, (list) => {
   for (const it of list) {
@@ -67,7 +72,7 @@ async function review(it: RevisionItem, status: 'APPROVED' | 'REVISION') {
 
 async function endorseSheet() {
   if (!endorsedFileId.value) return
-  const base = props.stage === 'SEMPRO' ? `/sempro/${props.seminarId}/revision-approval` : `/final-exam/${props.seminarId}/revision-approval`
+  const base = props.endorseEndpoint || (props.stage === 'SEMPRO' ? `/sempro/${props.seminarId}/revision-approval` : `/final-exam/${props.seminarId}/revision-approval`)
   if (await api.mutate(base, { file_id: endorsedFileId.value, version: props.seminarVersion })) emit('changed')
 }
 

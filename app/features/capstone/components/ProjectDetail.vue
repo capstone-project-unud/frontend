@@ -110,7 +110,14 @@ async function action(path: string, body: Record<string, unknown> = {}, method: 
                   <td><strong :class="m.is_leader ? 'cap-leader' : 'muted'">{{ m.is_leader ? 'Ketua kelompok' : 'Anggota' }}</strong></td>
                   <td>{{ m.responsibility || '—' }}</td>
                   <td>{{ project.students.find(s => s.student_id === m.student_id && s.slot === 1)?.supervisor_name || project.students.find(s => s.student_id === m.student_id && s.slot === 1)?.candidate_name || '—' }}</td>
-                  <td>{{ project.students.find(s => s.student_id === m.student_id && s.slot === 2)?.supervisor_name || project.students.find(s => s.student_id === m.student_id && s.slot === 2)?.candidate_name || '—' }}</td>
+                  <td>
+                    <template v-for="s2 in [project.students.find(s => s.student_id === m.student_id && s.slot === 2)]" :key="m.student_id + '-s2'">
+                      <span>{{ s2?.supervisor_name || s2?.candidate_name || '—' }}</span>
+                      <small v-if="s2?.is_external_supervisor && s2?.external_supervisor_name" class="muted">
+                        Mitra: {{ s2.external_supervisor_name }}{{ s2.external_supervisor_institution ? ` (${s2.external_supervisor_institution})` : '' }}
+                      </small>
+                    </template>
+                  </td>
                 </tr>
               </tbody>
             </table>

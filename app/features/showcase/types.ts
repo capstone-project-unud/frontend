@@ -35,6 +35,7 @@ export interface ShowcaseWork {
   supervisors: [string, string]
   members: ShowcaseMember[]
   poster: ShowcasePosterContent
+  poster_file_id?: string | null
   video_url: string
   repo_url: string
   demo_url: string

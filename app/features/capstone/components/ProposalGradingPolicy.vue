@@ -14,6 +14,16 @@ const bands = ref<{ minimum: number | ''; letter: string }[]>(props.policy?.rule
 const confirm = shallowRef(false)
 const indicatorTotal = computed(() => Object.values(weights).reduce<number>((sum, v) => sum + Number(v), 0))
 const panelTotal = computed(() => Object.values(panelWeights).reduce<number>((sum, v) => sum + Number(v), 0))
+function applyDefaultPreset() {
+ if (!name.value.trim()) name.value = 'Kebijakan Penilaian Sempro PSTI Unud'
+ for (const i of indicators) weights[i.code] = 6.25
+ panelWeights.SUPERVISOR_1 = 30
+ panelWeights.SUPERVISOR_2 = 20
+ panelWeights.EXAMINER_1 = 20
+ panelWeights.EXAMINER_2 = 20
+ panelWeights.EXAMINER_3 = 10
+ bands.value = [{ minimum: 80, letter: 'A' }, { minimum: 65, letter: 'B' }, { minimum: 0, letter: 'C' }]
+}
 async function save() {
  if (!confirm.value) return
  if (await api.mutate('/proposal-grading-policy', { name: name.value, indicator_weights: weights, panel_weights: panelWeights, letter_bands: bands.value })) emit('saved')
@@ -22,6 +32,7 @@ async function save() {
 <template>
  <details class="panel cap-section"><summary>Aturan perhitungan nilai proposal{{ policy ? ' · ' + policy.name : ' · Belum ditetapkan' }}</summary>
   <p class="muted">Perubahan bobot dan konversi huruf berlaku untuk ujian yang belum mulai dinilai.</p>
+  <div class="cap-actions"><button type="button" class="button secondary" :disabled="busy" @click="applyDefaultPreset">Isi contoh bobot merata</button></div>
   <form class="cap-section" @submit.prevent="save"><fieldset class="cap-fieldset" :disabled="busy">
    <div class="field"><label for="policy-name">Nama dan versi aturan</label><input id="policy-name" v-model="name" required minlength="3" maxlength="150" placeholder="Nama keputusan atau periode penilaian"></div>
    <h3>Bobot indikator · {{ indicatorTotal }} / 100%</h3><div class="field-grid"><div v-for="i in indicators" :key="i.code" class="field"><label :for="'weight-' + i.code">{{ i.code }} · {{ i.label }}</label><input :id="'weight-' + i.code" v-model.number="weights[i.code]" type="number" required min="0.0001" max="100" step="0.0001" inputmode="decimal"></div></div>

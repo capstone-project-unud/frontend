@@ -28,13 +28,19 @@ function initialMembers(): MemberInput[] {
   if (props.project) {
     return props.project.students
       .filter(r => r.slot === 1)
-      .map(r => ({
-        student_id: r.student_id,
-        is_leader: r.is_leader ?? (r.student_id === props.project?.owner_id),
-        responsibility: r.responsibility || '',
-        candidate_1: r.candidate_id,
-        candidate_2: props.project?.students.find(s => s.student_id === r.student_id && s.slot === 2)?.candidate_id || null,
-      }))
+      .map(r => {
+        const slot2 = props.project?.students.find(s => s.student_id === r.student_id && s.slot === 2)
+        return {
+          student_id: r.student_id,
+          is_leader: r.is_leader ?? (r.student_id === props.project?.owner_id),
+          responsibility: r.responsibility || '',
+          candidate_1: r.candidate_id,
+          candidate_2: slot2?.candidate_id || null,
+          is_external_supervisor: slot2?.is_external_supervisor || false,
+          external_supervisor_name: slot2?.external_supervisor_name || '',
+          external_supervisor_institution: slot2?.external_supervisor_institution || '',
+        }
+      })
   }
   if (linkedGroup.value) {
     return linkedGroup.value.members.map(m => ({
@@ -43,11 +49,14 @@ function initialMembers(): MemberInput[] {
       responsibility: m.responsibility,
       candidate_1: null,
       candidate_2: null,
+      is_external_supervisor: false,
+      external_supervisor_name: '',
+      external_supervisor_institution: '',
     }))
   }
   return [
-    { student_id: ownID.value, is_leader: true, responsibility: 'Ketua Kelompok', candidate_1: null, candidate_2: null },
-    { student_id: '', is_leader: false, responsibility: 'Anggota Tim', candidate_1: null, candidate_2: null },
+    { student_id: ownID.value, is_leader: true, responsibility: 'Ketua Kelompok', candidate_1: null, candidate_2: null, is_external_supervisor: false, external_supervisor_name: '', external_supervisor_institution: '' },
+    { student_id: '', is_leader: false, responsibility: 'Anggota Tim', candidate_1: null, candidate_2: null, is_external_supervisor: false, external_supervisor_name: '', external_supervisor_institution: '' },
   ]
 }
 
@@ -158,8 +167,22 @@ function studentName(id: string) {
           <PersonPicker v-model="member.candidate_1" role="DOSEN" label="Calon pembimbing 1" :current-name="project?.students.find(s => s.student_id === member.student_id && s.slot === 1)?.candidate_name" />
           <PersonPicker v-model="member.candidate_2" role="DOSEN" label="Calon pembimbing 2" :current-name="project?.students.find(s => s.student_id === member.student_id && s.slot === 2)?.candidate_name" />
         </div>
+        <label class="check-field">
+          <input v-model="member.is_external_supervisor" type="checkbox">
+          <span>Libatkan pembimbing mitra / eksternal industri (opsional)</span>
+        </label>
+        <div v-if="member.is_external_supervisor" class="field-grid">
+          <div class="field">
+            <label :for="'ext-name-' + index">Nama pembimbing mitra / eksternal</label>
+            <input :id="'ext-name-' + index" v-model="member.external_supervisor_name" maxlength="150" placeholder="Nama lengkap &amp; gelar pembimbing mitra">
+          </div>
+          <div class="field">
+            <label :for="'ext-inst-' + index">Instansi / perusahaan mitra</label>
+            <input :id="'ext-inst-' + index" v-model="member.external_supervisor_institution" maxlength="200" placeholder="Contoh: PT Teknologi Nusantara / Diskominfo">
+          </div>
+        </div>
       </div>
-      <button v-if="!linkedGroup && form.members.length < 5" type="button" class="button secondary" @click="form.members.push({ student_id: '', is_leader: false, responsibility: 'Anggota Tim', candidate_1: null, candidate_2: null })">
+      <button v-if="!linkedGroup && form.members.length < 5" type="button" class="button secondary" @click="form.members.push({ student_id: '', is_leader: false, responsibility: 'Anggota Tim', candidate_1: null, candidate_2: null, is_external_supervisor: false, external_supervisor_name: '', external_supervisor_institution: '' })">
         Tambah anggota
       </button>
     </fieldset>
